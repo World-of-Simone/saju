@@ -50,8 +50,24 @@ body {
   vertical-align: middle;
   margin-left: 0.6rem;
 }
-.tagline { max-width: 46ch; margin: 0.75rem auto 0; color: var(--ink-soft); }
+.lead-question {
+  font-family: "Noto Serif KR", serif;
+  font-size: clamp(1.3rem, 3vw, 1.7rem);
+  color: var(--accent);
+  margin: 1rem auto 0;
+}
+.tagline { max-width: 52ch; margin: 0.75rem auto 0; color: var(--ink-soft); }
 .tagline strong { color: var(--accent); }
+.lead-cta { max-width: 46ch; margin: 0.9rem auto 0; font-weight: 500; }
+.asterisk { color: var(--gold); text-decoration: none; }
+.asterisk:hover { text-decoration: underline; }
+.philosophy {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  font-style: italic;
+  margin: 0 0 1rem;
+}
+.accuracy-note { max-width: 60ch; margin: 0 auto 1rem; }
 
 /* ---- Layout ---- */
 .layout { display: grid; grid-template-columns: minmax(320px, 380px) 1fr; gap: 1.5rem; align-items: start; }

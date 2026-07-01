@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "dev:web": "npm run build && vite",
     "build:web": "npm run build && vite build",
-    "preview:web": "vite preview"
+    "preview:web": "vite preview",
+    "gen:cities": "node scripts/gen_cities.mjs"
   },
   "keywords": [
     "saju",

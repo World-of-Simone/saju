@@ -16,10 +16,13 @@
     <div class="page">
       <header class="hero">
         <h1>사주 <span class="hero-en">Saju</span></h1>
+        <p class="lead-question">Who are you? What's in store for you?</p>
         <p class="tagline">
-          Korean Four Pillars, computed from your <strong>true solar time</strong> — the way
-          the sky actually looked at your birthplace, not just your wall clock.
+          Saju is ancient Korean art that reads your life from the pattern the sky held at
+          the hour you were born, arranged into a portrait of your character, your closest
+          relationships, and the seasons your luck moves through.
         </p>
+        <p class="lead-cta">Enter three details<a href="#accuracy-note" class="asterisk">*</a> and cast your chart.</p>
       </header>
 
       <main class="layout">
@@ -37,12 +40,17 @@
               <label class="field time-field">
                 <span>Time of birth</span>
                 <input type="time" id="birthtime" value="14:30" />
+                <small class="hint">Enter it as exactly as you can.</small>
               </label>
               <label class="checkbox">
                 <input type="checkbox" id="unknown-time" />
                 <span>Time unknown</span>
               </label>
             </div>
+            <p class="hint unknown-time-hint">
+              Without a birth time, we can still build most of your chart, but not the part
+              drawn from the hour you were born.
+            </p>
 
             <div class="field-row">
               <label class="field">
@@ -55,6 +63,7 @@
                   value="Seoul"
                 />
                 <ul id="city-suggestions" class="suggestions" hidden></ul>
+                <small class="hint">Used to place the Sun and to pick the time zone that was actually in effect where you were born.</small>
               </label>
             </div>
 
@@ -73,14 +82,12 @@
             </details>
 
             <fieldset class="daeun-fieldset">
-              <legend>Gender <span class="legend-ko">— for 대운 (luck pillars)</span></legend>
+              <legend>Gender <span class="legend-ko">— for the direction of your 대운 (luck pillars)</span></legend>
               <p class="hint">
                 Your <span class="term" data-term="daeun">luck pillars</span> unfold in a
                 direction the classical system derives from your birth-year polarity together
                 with gender — and the tradition only recognizes two. Choose the one you most
-                identify with, or try each and compare. Saju is an interpretive art and a
-                philosophical way of contemplating a life — not a deterministic prediction or a
-                fixed verdict about who you are.
+                identify with, or try each and compare.
               </p>
               <div class="radio-row">
                 <label class="radio"><input type="radio" name="gender" value="female" /><span>Female</span></label>
@@ -88,7 +95,12 @@
               </div>
             </fieldset>
 
-            <button type="submit" class="calc-btn">Calculate my chart</button>
+            <p class="philosophy">
+              Saju is an interpretive art, a way of contemplating life — not a deterministic
+              prediction or a fixed verdict about who you are.
+            </p>
+
+            <button type="submit" class="calc-btn">Cast my chart</button>
           </form>
         </section>
 
@@ -96,10 +108,27 @@
       </main>
 
       <footer class="footer">
+        <p id="accuracy-note" class="accuracy-note">
+          * Most saju/BaZi calculators build your chart from the time on your birth
+          certificate. This one builds it from where the Sun actually was over your
+          birthplace at that moment — correcting for your location, the season, and the
+          time-zone rules in effect the year you were born.
+        </p>
         <p>
-          Year boundary at 입춘 (Ipchun / Start of Spring), not Jan 1 or Lunar New Year ·
-          Solar-term instants accurate to seconds (VSOP87) · Timezone &amp; historical DST via
-          the IANA database.
+          Year boundary set at 입춘, the Start of Spring. Solar-term timings computed to the
+          second. Time zones and historical daylight saving resolved through the IANA
+          database.
+        </p>
+        <p>
+          This tool was built by Simone Grace Seol, under the supervision of Saju Master
+          Kim — her mother-in-law, a practitioner of three decades. Master Kim's wish is
+          that what you find here helps you know yourself, live well, and do good in the
+          world.
+        </p>
+        <p>
+          City data ©
+          <a href="https://www.geonames.org/" target="_blank" rel="noopener noreferrer">GeoNames</a>,
+          licensed under CC BY 4.0.
         </p>
       </footer>
     </div>

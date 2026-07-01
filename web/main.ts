@@ -12,7 +12,7 @@ import {
 import type { Pillar } from "../dist/pillars.js";
 import type { PillarTenGods, TenGodLabel } from "../dist/analysis.js";
 import type { DaeunResult } from "../dist/daeun.js";
-import { CITIES, type City } from "./cities";
+import { warmCities, searchCities, type City } from "./cities";
 
 // ---------- tiny DOM helpers ----------
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
@@ -39,9 +39,14 @@ const lonInput = $<HTMLInputElement>("#longitude");
 const tzInput = $<HTMLInputElement>("#timezone");
 let activeIdx = -1;
 let matches: City[] = [];
+let searchSeq = 0; // guards against out-of-order async results
+
+/** Secondary line for a city: "Region, Country" (region omitted when absent/redundant). */
+const cityDetail = (c: City) =>
+  c.region && c.region !== c.name ? `${c.region}, ${c.country}` : c.country;
 
 function applyCity(c: City) {
-  cityInput.value = `${c.name}, ${c.country}`;
+  cityInput.value = `${c.name}, ${cityDetail(c)}`;
   lonInput.value = String(c.lon);
   tzInput.value = c.tz;
 }
@@ -54,7 +59,7 @@ function renderSuggestions() {
   }
   matches.forEach((c, i) => {
     const li = el("li", i === activeIdx ? "active" : "");
-    li.innerHTML = `<span>${esc(c.name)}</span><span class="country">${esc(c.country)}</span>`;
+    li.innerHTML = `<span>${esc(c.name)}</span><span class="country">${esc(cityDetail(c))}</span>`;
     li.addEventListener("mousedown", (e) => {
       e.preventDefault();
       applyCity(c);
@@ -65,18 +70,27 @@ function renderSuggestions() {
   sugBox.hidden = false;
 }
 
+// Warm the (lazily fetched) city dataset as soon as the field gains focus.
+cityInput.addEventListener("focus", warmCities);
+
 cityInput.addEventListener("input", () => {
-  const q = cityInput.value.trim().toLowerCase();
+  const q = cityInput.value.trim();
   activeIdx = -1;
   if (q.length < 1) {
     matches = [];
     renderSuggestions();
     return;
   }
-  matches = CITIES.filter(
-    (c) => c.name.toLowerCase().includes(q) || c.country.toLowerCase().includes(q)
-  ).slice(0, 8);
-  renderSuggestions();
+  const seq = ++searchSeq;
+  searchCities(q).then((results) => {
+    if (seq !== searchSeq) return; // a newer query superseded this one
+    matches = results;
+    renderSuggestions();
+  }).catch(() => {
+    if (seq !== searchSeq) return;
+    matches = [];
+    renderSuggestions(); // fall back silently; manual longitude/timezone entry still works
+  });
 });
 
 cityInput.addEventListener("keydown", (e) => {

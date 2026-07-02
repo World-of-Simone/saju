@@ -45,13 +45,15 @@ export interface PillarTenGods {
   stem: TenGodLabel | null;
   /** Ten God of the branch's MAIN hidden stem relative to the Day Master. */
   branchMain: TenGodLabel;
-  /** Ten Gods of ALL hidden stems in the branch (지장간), main qi last. */
+  /** Ten Gods of ALL hidden stems in the branch (지장간), main qi (정기) first. */
   hidden: TenGodLabel[];
 }
 
 function pillarTenGods(dm: Stem, pillar: Pillar, isDayPillar: boolean): PillarTenGods {
   const hidden = pillar.branch.hiddenStems.map((si) => label(tenGodOf(dm, STEMS[si]!)));
-  const mainHiddenStem = STEMS[pillar.branch.hiddenStems[pillar.branch.hiddenStems.length - 1]!]!;
+  // The branch's Ten God is driven by the main qi (정기/본기), which is stored FIRST in
+  // hiddenStems (its element always matches the branch's own element).
+  const mainHiddenStem = STEMS[pillar.branch.hiddenStems[0]!]!;
   return {
     stem: isDayPillar ? null : label(tenGodOf(dm, pillar.stem)),
     branchMain: label(tenGodOf(dm, mainHiddenStem)),

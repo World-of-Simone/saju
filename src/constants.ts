@@ -47,7 +47,7 @@ export interface Branch {
   polarity: Polarity;
   animalKo: string;
   animalEn: string;
-  /** Hidden stems (지장간): stem indices concealed inside the branch, main qi last-weighted. */
+  /** Hidden stems (지장간): stem indices concealed inside the branch, main qi (정기) first. */
   hiddenStems: number[];
 }
 

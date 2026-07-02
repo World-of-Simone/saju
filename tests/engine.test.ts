@@ -6,8 +6,9 @@
 import { describe, it, expect } from "vitest";
 import { computeSaju } from "../src/index.js";
 import { computeTrueSolarTime } from "../src/time/trueSolarTime.js";
-import { tenGodOf } from "../src/analysis.js";
-import { STEMS } from "../src/constants.js";
+import { tenGodOf, computeTenGods } from "../src/analysis.js";
+import { STEMS, BRANCHES } from "../src/constants.js";
+import type { FourPillars } from "../src/pillars.js";
 import { directionFromConvention } from "../src/daeun.js";
 
 describe("true solar time — longitude & equation of time", () => {
@@ -94,6 +95,40 @@ describe("Ten Gods logic", () => {
   });
   it("element that produces me, opposite polarity => 정인 (Direct Resource)", () => {
     expect(tenGodOf(gap, STEMS[9]!)).toBe("jeongin"); // 癸 Yin Water
+  });
+});
+
+describe("branch Ten God is driven by the main qi (정기), stored first", () => {
+  // Invariant the selection logic depends on: index 0 of every branch's hidden stems is the
+  // 정기 — its element always matches the branch's own element.
+  it("stores the main qi first in every branch's hidden stems", () => {
+    for (const b of BRANCHES) {
+      expect(STEMS[b.hiddenStems[0]!]!.element).toBe(b.element);
+    }
+  });
+
+  // Regression for the branch-Ten-God bug: it read the LAST hidden stem (residual qi) instead
+  // of the FIRST (main qi). Chart: 庚 (Yang Metal) day master over 寅 / 亥 / 子.
+  //  - 寅 main qi 甲 => 편재 (was wrongly 편인 from residual 戊)
+  //  - 亥 main qi 壬 => 식신 (was wrongly 편재 from residual 甲)
+  //  - 子 single hidden 癸 => 상관 (correct either way; included to pin it)
+  it("keys 寅/亥/子 off the main qi for a 庚 day master", () => {
+    const gyeong = STEMS[6]!; // 庚 Yang Metal
+    const cell = (branchIdx: number) => ({ ganzhiIndex: 0, stem: gyeong, branch: BRANCHES[branchIdx]! });
+    const pillars: FourPillars = {
+      year: cell(2), // 寅
+      month: cell(11), // 亥
+      day: cell(0), // 子 — Day Master stem is 庚
+      hour: cell(2), // 寅
+      sajuYear: 0,
+      monthOffset: 0,
+    };
+    const tg = computeTenGods(pillars);
+    expect(tg.year.branchMain.info.hangul).toBe("편재"); // 寅
+    expect(tg.month.branchMain.info.hangul).toBe("식신"); // 亥
+    expect(tg.day.branchMain.info.hangul).toBe("상관"); // 子
+    // The residual qi must NOT drive it: 寅's last hidden stem is 戊 => 편인.
+    expect(tg.year.branchMain.info.hangul).not.toBe("편인");
   });
 });
 

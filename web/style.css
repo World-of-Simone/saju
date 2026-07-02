@@ -88,6 +88,10 @@ body {
 
 /* ---- Layout ---- */
 .layout { display: grid; grid-template-columns: minmax(320px, 380px) 1fr; gap: 2rem; align-items: start; }
+/* Before a chart is cast the results column is empty — center the form
+   instead of stranding it in the narrow left column. */
+.layout:has(.results:empty) { grid-template-columns: minmax(320px, 460px); justify-content: center; }
+.layout:has(.results:empty) .form-card { position: static; }
 @media (max-width: 860px) {
   .layout { grid-template-columns: 1fr; }
   .form-card { position: static; }

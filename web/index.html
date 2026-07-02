@@ -14,98 +14,102 @@
   </head>
   <body>
     <div class="page">
+      <div class="lang-toggle" role="group" aria-label="Language">
+        <button type="button" class="lang-btn" data-lang="en">EN</button>
+        <button type="button" class="lang-btn" data-lang="ko">한국어</button>
+      </div>
       <header class="hero">
-        <h1>Who are you? What's in store for you?</h1>
-        <p class="lead-question">Welcome to your Saju reading with Saju Master Kim.</p>
-        <p class="tagline">
+        <h1 data-i18n="hero_title">Welcome to your Saju reading with Saju Master Kim.</h1>
+        <p class="tagline" data-i18n="hero_tagline">
           Saju is ancient Korean art that reads your life from the pattern the sky held at
           the hour you were born, arranged into a portrait of your character, your closest
           relationships, and the seasons your luck moves through.
         </p>
-        <p id="accuracy-note" class="tagline">
+        <p id="accuracy-note" class="tagline" data-i18n="hero_precision">
           This Saju calculator was built to be more astronomically precise than typical
           online calculators. Solar-term timings are computed to the second, and time zones
           and historical daylight saving are resolved through the IANA database.
         </p>
-        <p class="lead-cta">Enter four details<a href="#accuracy-note" class="asterisk">*</a> and cast your chart.</p>
+        <p class="lead-cta" data-i18n-html="hero_cta">Enter four details<a href="#accuracy-note" class="asterisk">*</a> and cast your chart.</p>
       </header>
 
       <main class="layout">
         <section class="card form-card" aria-label="Birth details">
-          <h2>Your birth details</h2>
+          <h2 data-i18n="form_title">Your birth details</h2>
           <form id="saju-form">
             <div class="field-row">
               <label class="field">
-                <span>Date of birth</span>
+                <span data-i18n="f_date">Date of birth</span>
                 <input type="date" id="birthdate" required value="1990-05-15" />
               </label>
             </div>
 
             <div class="field-row">
               <label class="field time-field">
-                <span>Time of birth</span>
+                <span data-i18n="f_time">Time of birth</span>
                 <input type="time" id="birthtime" value="14:30" />
-                <small class="hint">Enter it as exactly as you can.</small>
+                <small class="hint" data-i18n="f_time_hint">Enter it as exactly as you can.</small>
               </label>
               <label class="checkbox">
                 <input type="checkbox" id="unknown-time" />
-                <span>Time unknown</span>
+                <span data-i18n="f_time_unknown">Time unknown</span>
               </label>
             </div>
-            <p class="hint unknown-time-hint">
+            <p class="hint unknown-time-hint" data-i18n="f_unknown_hint">
               Without a birth time, we can still build most of your chart, but not the part
               drawn from the hour you were born.
             </p>
 
             <div class="field-row">
               <label class="field">
-                <span>Birthplace</span>
+                <span data-i18n="f_place">Birthplace</span>
                 <input
                   type="text"
                   id="city-input"
                   placeholder="Start typing a city…"
+                  data-i18n-ph="f_place_ph"
                   autocomplete="off"
                   value="Seoul"
                 />
                 <ul id="city-suggestions" class="suggestions" hidden></ul>
-                <small class="hint">Used to place the Sun and to pick the time zone that was actually in effect where you were born.</small>
+                <small class="hint" data-i18n="f_place_hint">Used to place the Sun and to pick the time zone that was actually in effect where you were born.</small>
               </label>
             </div>
 
             <details class="advanced">
-              <summary>Advanced: set longitude &amp; timezone manually</summary>
+              <summary data-i18n="f_adv">Advanced: set longitude &amp; timezone manually</summary>
               <div class="field-row">
                 <label class="field">
-                  <span>Longitude (° east +)</span>
+                  <span data-i18n="f_lon">Longitude (° east +)</span>
                   <input type="number" id="longitude" step="0.0001" value="126.978" />
                 </label>
                 <label class="field">
-                  <span>IANA timezone</span>
+                  <span data-i18n="f_tz">IANA timezone</span>
                   <input type="text" id="timezone" value="Asia/Seoul" />
                 </label>
               </div>
             </details>
 
             <fieldset class="daeun-fieldset">
-              <legend>Gender <span class="legend-ko">— for the direction of your 대운 (luck pillars)</span></legend>
-              <p class="hint">
+              <legend data-i18n-html="f_gender">Gender <span class="legend-ko">— for the direction of your 대운 (luck pillars)</span></legend>
+              <p class="hint" data-i18n-html="f_gender_hint">
                 Your <span class="term" data-term="daeun">luck pillars</span> unfold in a
                 direction the classical system derives from your birth-year polarity together
                 with gender — and the tradition only recognizes two. Choose the one you most
                 identify with, or try each and compare.
               </p>
               <div class="radio-row">
-                <label class="radio"><input type="radio" name="gender" value="female" /><span>Female</span></label>
-                <label class="radio"><input type="radio" name="gender" value="male" /><span>Male</span></label>
+                <label class="radio"><input type="radio" name="gender" value="female" /><span data-i18n="f_female">Female</span></label>
+                <label class="radio"><input type="radio" name="gender" value="male" /><span data-i18n="f_male">Male</span></label>
               </div>
             </fieldset>
 
-            <p class="philosophy">
+            <p class="philosophy" data-i18n="f_philosophy">
               Saju is an interpretive art, a way of contemplating life — not a deterministic
               prediction or a fixed verdict about who you are.
             </p>
 
-            <button type="submit" class="calc-btn">Cast my chart</button>
+            <button type="submit" class="calc-btn" data-i18n="f_submit">Cast my chart</button>
           </form>
         </section>
 
@@ -113,14 +117,14 @@
       </main>
 
       <footer class="footer">
-        <p>
+        <p data-i18n="footer_credit">
           This tool was built by Simone Grace Seol, under the supervision of her mother-in-law,
           Master Kim H.K. — a Saju practitioner with three decades of experience, who is
           certified in five classical disciplines, and appointed to the central academic
           committee of Korea's scholarly society for fate studies. Our family's wish is that
           what you find here helps you know yourself, live well, and do good in the world.
         </p>
-        <p>
+        <p data-i18n-html="footer_geonames">
           City data ©
           <a href="https://www.geonames.org/" target="_blank" rel="noopener noreferrer">GeoNames</a>,
           licensed under CC BY 4.0.

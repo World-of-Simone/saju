@@ -46,7 +46,41 @@ body {
   line-height: 1.6;
 }
 
-.page { max-width: 1080px; margin: 0 auto; padding: 3rem 1.25rem 4.5rem; }
+.page { position: relative; max-width: 1080px; margin: 0 auto; padding: 3rem 1.25rem 4.5rem; }
+
+/* ---- Language toggle (top-right pill on the dark canvas) ---- */
+.lang-toggle {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid rgba(227, 168, 14, 0.4);
+  border-radius: 999px;
+  background: rgba(20, 18, 12, 0.35);
+  backdrop-filter: blur(4px);
+  z-index: 5;
+}
+.lang-btn {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 0.32rem 0.85rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--paper);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.lang-btn:hover { color: var(--paper-hi); }
+.lang-btn.active {
+  background: var(--green);
+  color: var(--paper-hi);
+  box-shadow: inset 0 0 0 1px rgba(227, 168, 14, 0.55);
+}
 
 /* ---- Hero (sits on the dark canvas → light ink) ---- */
 .hero { text-align: center; margin-bottom: 2.75rem; color: var(--paper); }

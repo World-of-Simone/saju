@@ -6,8 +6,11 @@ import {
   computeSaju,
   GLOSSARY,
   ELEMENT_EN,
+  POLARITY_EN,
+  STEMS,
   type SajuResult,
   type Element,
+  type Stem,
 } from "../dist/index.js";
 import type { Pillar } from "../dist/pillars.js";
 import type { PillarTenGods, TenGodLabel } from "../dist/analysis.js";
@@ -133,6 +136,191 @@ const timeInput = $<HTMLInputElement>("#birthtime");
 unknownTime.addEventListener("change", () => {
   timeInput.disabled = unknownTime.checked;
   timeInput.style.opacity = unknownTime.checked ? "0.5" : "1";
+});
+
+// ---------- plain-text export (copy chart for AI) ----------
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+/** Current chart serialized as text; refreshed on every render, read by the copy button. */
+let currentChartText = "";
+
+function stemDesc(s: Stem): string {
+  return `${s.hanja} (${s.hangul} · ${s.roman}), ${ELEMENT_EN[s.element]}/${POLARITY_EN[s.polarity]}`;
+}
+
+function pillarText(label: string, ko: string, p: Pillar, tg: PillarTenGods, isDay: boolean): string {
+  const gz = `${p.stem.hanja}${p.branch.hanja} (${p.stem.hangul}${p.branch.hangul} · ${p.stem.roman}-${p.branch.roman})`;
+  const stemGod = isDay
+    ? "Day Master (일간) — this pillar's stem IS you"
+    : tg.stem
+      ? `${tg.stem.info.en} (${tg.stem.info.hangul})`
+      : "—";
+  const branchGod = `${tg.branchMain.info.en} (${tg.branchMain.info.hangul})`;
+  const hidden = p.branch.hiddenStems
+    .map((idx, i) => {
+      const hs = STEMS[idx]!;
+      const hg = tg.hidden[i];
+      return `${hs.hanja}${hs.hangul}${hg ? ` [${hg.info.en}]` : ""}`;
+    })
+    .join(", ");
+  return [
+    `${label} (${ko}): ${gz}`,
+    `    Stem   ${stemDesc(p.stem)} — Ten God: ${stemGod}`,
+    `    Branch ${p.branch.hanja} (${p.branch.hangul} · ${p.branch.roman}), ${p.branch.animalEn}, ${ELEMENT_EN[p.branch.element]}/${POLARITY_EN[p.branch.polarity]} — Ten God: ${branchGod}`,
+    `    Hidden stems (지장간): ${hidden}`,
+  ].join("\n");
+}
+
+function daeunText(d: DaeunResult): string {
+  const head = `Direction: ${d.direction === "forward" ? "forward (순행)" : "reverse (역행)"}. First luck pillar begins at age ${d.startAgeYears.toFixed(1)}.`;
+  const lines = d.pillars.map(
+    (dp) =>
+      `  age ${dp.startAge.toFixed(1)}: ${dp.pillar.stem.hanja}${dp.pillar.branch.hanja} (${dp.pillar.stem.hangul}${dp.pillar.branch.hangul})`,
+  );
+  return [head, ...lines].join("\n");
+}
+
+function buildChartText(r: SajuResult, place: string): string {
+  const inp = r.input;
+  const t = r.trueSolarTime;
+  const ts = t.trueSolar;
+  const e = r.elements;
+  const order: Element[] = ["wood", "fire", "earth", "metal", "water"];
+
+  const bd = `${inp.year}-${pad2(inp.month)}-${pad2(inp.day)}`;
+  const known = inp.hasBirthTime !== false;
+  const timeStr = known ? `${pad2(inp.hour)}:${pad2(inp.minute)}` : "unknown";
+  const trueClock = `${ts.year}-${pad2(ts.month)}-${pad2(ts.day)} ${pad2(ts.hour)}:${pad2(ts.minute)}`;
+  const sex = inp.daeun?.fromConvention?.sex;
+
+  const L: string[] = [];
+  L.push("KOREAN SAJU (사주 · Four Pillars) CHART");
+  L.push("Computed at https://world-of-simone.github.io/saju/");
+  L.push("");
+  L.push(
+    "I'm sharing my Saju (Korean Four Pillars) chart below. It was calculated from true solar time — " +
+      "the Sun's actual position over my birthplace — with the year boundary at 입춘 (Start of Spring) and " +
+      "month boundaries at the 12 solar terms, so it's more astronomically precise than typical calculators. " +
+      "Please read it as an interpretive art: a lens for self-reflection and contemplation, not a fixed " +
+      "prediction or a verdict about who I am. Walk me through what stands out and what it might mean, and " +
+      "keep the framing exploratory. Feel free to ask me questions back.",
+  );
+  L.push("");
+
+  L.push("── BIRTH DETAILS ──");
+  L.push(`Date: ${bd}`);
+  L.push(`Time: ${timeStr}${known ? " (local clock time as recorded)" : " (Hour Pillar omitted)"}`);
+  L.push(`Birthplace: ${place || "(unspecified)"} (longitude ${inp.longitude}° E)`);
+  L.push(`Timezone: ${inp.timezone} (UTC${fmt(t.utcOffsetMinutes / 60, 2)}${t.isDST ? ", DST in effect" : ""})`);
+  if (known) {
+    L.push(`True solar birth moment: ${trueClock}`);
+    L.push(
+      `  Longitude correction ${fmt(t.longitudeCorrectionMinutes)} min · Equation of Time ${fmt(t.equationOfTimeMinutes)} min · net shift vs clock ${fmt(t.totalCorrectionMinutes)} min`,
+    );
+  }
+  if (sex) L.push(`Gender used for luck-pillar direction (classical binary rule): ${sex}`);
+  L.push("");
+
+  L.push("── FOUR PILLARS (사주 / 八字) ──");
+  L.push("Traditionally read right→left: Year, Month, Day, Hour. The Day stem is the Day Master (일간) = me.");
+  L.push(`Day Master: ${stemDesc(r.dayMaster)}`);
+  L.push("");
+  L.push(pillarText("YEAR ", "연주", r.pillars.year, r.tenGods.year, false));
+  L.push(pillarText("MONTH", "월주", r.pillars.month, r.tenGods.month, false));
+  L.push(pillarText("DAY  ", "일주", r.pillars.day, r.tenGods.day, true));
+  if (r.pillars.hour && r.tenGods.hour) {
+    L.push(pillarText("HOUR ", "시주", r.pillars.hour, r.tenGods.hour, false));
+  } else {
+    L.push("HOUR  (시주): unknown — birth time not provided.");
+  }
+  L.push("");
+
+  L.push("── FIVE ELEMENTS (오행) ──");
+  L.push(
+    "Weighted (includes hidden stems): " +
+      order.map((k) => `${ELEMENT_EN[k]} ${e.weighted[k]}`).join(" · "),
+  );
+  L.push("Visible (8 characters):        " + order.map((k) => `${ELEMENT_EN[k]} ${e.visible[k]}`).join(" · "));
+  L.push(`Strongest: ${ELEMENT_EN[e.strongest]} · Weakest: ${ELEMENT_EN[e.weakest]}`);
+  L.push(
+    e.missing.length
+      ? `Missing (absent from the eight characters): ${e.missing.map((m) => ELEMENT_EN[m]).join(", ")} — often the most telling part of a reading.`
+      : "All five elements are represented.",
+  );
+  L.push("");
+
+  if (r.daeun && (r.daeun.forward || r.daeun.reverse)) {
+    L.push("── LUCK PILLARS (대운 · Dae-un) ──");
+    L.push("Ten-year seasons that layer over the natal chart; start age comes from birth's distance to the neighboring solar terms.");
+    if (r.daeun.forward) L.push(daeunText(r.daeun.forward));
+    if (r.daeun.reverse) L.push(daeunText(r.daeun.reverse));
+    L.push("");
+  }
+
+  if (r.warnings.length) {
+    L.push("── NOTES ──");
+    for (const w of r.warnings) L.push(`- ${w}`);
+    L.push("");
+  }
+
+  L.push(
+    "Reminder for interpretation: Saju is a contemplative, interpretive tradition — please explore " +
+      "possibilities and meaning rather than issuing deterministic predictions.",
+  );
+
+  return L.join("\n");
+}
+
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    /* fall through to legacy path */
+  }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.top = "-1000px";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
+function copyBar(): string {
+  return `<section class="card result-section copy-bar">
+    <div class="copy-bar-row">
+      <div class="copy-bar-text">
+        <h3 style="margin:0">Take this reading with you</h3>
+        <p class="el-note" style="margin:0.3rem 0 0">Copy your full chart as text, then paste it into ChatGPT, Claude, or any AI to ask your own questions.</p>
+      </div>
+      <button type="button" id="copy-chart" class="copy-btn">Copy chart for AI</button>
+    </div>
+    <p id="copy-status" class="copy-status" aria-live="polite"></p>
+  </section>`;
+}
+
+document.addEventListener("click", async (e) => {
+  const btn = (e.target as HTMLElement).closest("#copy-chart");
+  if (!btn) return;
+  const ok = await copyToClipboard(currentChartText);
+  const status = $("#copy-status");
+  if (status) {
+    status.textContent = ok
+      ? "Copied! Paste it into ChatGPT, Claude, or any AI."
+      : "Couldn't copy automatically — select the text in the chart above and copy it manually.";
+    status.classList.toggle("ok", ok);
+  }
 });
 
 // ---------- rendering ----------
@@ -268,9 +456,11 @@ function renderWarnings(r: SajuResult): string {
   return `<section class="result-section"><ul class="warnings">${items}</ul></section>`;
 }
 
-function render(r: SajuResult) {
+function render(r: SajuResult, place: string) {
+  currentChartText = buildChartText(r, place);
   const out = $("#results");
   out.innerHTML =
+    copyBar() +
     renderWarnings(r) +
     renderPillars(r) +
     renderTST(r) +
@@ -306,7 +496,7 @@ $<HTMLFormElement>("#saju-form").addEventListener("submit", (e) => {
       hasBirthTime: hasTime,
       daeun: { fromConvention: { sex } },
     });
-    render(r);
+    render(r, cityInput.value.trim());
   } catch (err) {
     $("#results").innerHTML = `<section class="card result-section"><p style="color:var(--accent)">Could not compute chart: ${esc((err as Error).message)}</p></section>`;
   }

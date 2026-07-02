@@ -108,4 +108,52 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
     explain:
       "The 2-hour period spanning 23:00–01:00. Because it straddles midnight, births at 23:00–24:00 (야자시) keep the current day's Day Pillar while 00:00–01:00 (조자시) uses the next day.",
   },
+  singangyak: {
+    term: "singangyak",
+    hangul: "신강약",
+    hanja: "身强弱",
+    en: "Day Master Strength",
+    explain:
+      "How strong or weak your Day Master is, judged by three classical tests: 득령 (does it command the birth month's season?), 득지 (is it rooted in the branches?), and 득세 (do allies outnumber drainers?). A strong (신강) vs weak (신약) chart is read very differently — this part is deterministic.",
+  },
+  deukryeong: {
+    term: "deukryeong",
+    hangul: "득령",
+    hanja: "得令",
+    en: "Month Command",
+    explain:
+      "Whether the Day Master is 'in season' at birth. The month decides its 旺相休囚死 phase — thriving, supported, resting, trapped, or exhausted. Being in a favorable phase (득령) is the single strongest factor in strength.",
+  },
+  tongeun: {
+    term: "tongeun",
+    hangul: "통근",
+    hanja: "通根",
+    en: "Rootedness",
+    explain:
+      "Whether the Day Master's own element hides inside the Earthly Branches (득지). A stem with roots below is anchored and hard to topple; a rootless stem is fragile even if it looks supported on the surface.",
+  },
+  yongsin: {
+    term: "yongsin",
+    hangul: "용신",
+    hanja: "用神",
+    en: "Useful God",
+    explain:
+      "The element a chart most needs for balance — the pivot of a reading. Unlike strength, choosing the 용신 is interpretive and varies by school, so this tool offers CANDIDATES (never a verdict): an 억부 candidate and a 조후 candidate, flagging when they disagree.",
+  },
+  eokbu: {
+    term: "eokbu",
+    hangul: "억부",
+    hanja: "抑扶",
+    en: "Support/Suppress Method",
+    explain:
+      "The most common way to pick a 용신: if the Day Master is weak, favor what supports it (resource + companion); if strong, favor what drains or restrains it (output, wealth, officer). 'Suppress the strong, support the weak.'",
+  },
+  johu: {
+    term: "johu",
+    hangul: "조후",
+    hanja: "調候",
+    en: "Climate Method",
+    explain:
+      "A separate way to pick a 용신, by temperature: a chart that runs hot (Fire-heavy / summer) wants Water to cool it; one that runs cold (Water-heavy / winter) wants Fire to warm it. It can disagree with the 억부 candidate — that tension is meaningful, not an error.",
+  },
 };

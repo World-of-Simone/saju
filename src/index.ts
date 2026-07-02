@@ -18,6 +18,12 @@ import {
   type DaeunResult,
   type DaeunDirection,
 } from "./daeun.js";
+import {
+  computeStrength,
+  computeYongsin,
+  type StrengthResult,
+  type YongsinResult,
+} from "./strength.js";
 import type { Stem } from "./constants.js";
 
 export * from "./constants.js";
@@ -26,6 +32,7 @@ export type { CivilInput, TrueSolarTimeResult } from "./time/trueSolarTime.js";
 export type { FourPillars, Pillar } from "./pillars.js";
 export type { TenGodsResult, ElementBalance } from "./analysis.js";
 export type { DaeunResult, DaeunDirection } from "./daeun.js";
+export type { StrengthResult, YongsinResult } from "./strength.js";
 
 export interface SajuInput extends CivilInput {
   /**
@@ -55,6 +62,10 @@ export interface SajuResult {
   dayMaster: Stem;
   tenGods: TenGodsResult;
   elements: ElementBalance;
+  /** 신강약 — Day Master strength. Deterministic. */
+  strength: StrengthResult;
+  /** 용신 — PROVISIONAL useful-god candidates (억부 + 조후), with a divergence flag. */
+  yongsin: YongsinResult;
   daeun?: { forward?: DaeunResult; reverse?: DaeunResult; inclusivityNote?: string };
   warnings: string[];
 }
@@ -88,6 +99,8 @@ export function computeSaju(input: SajuInput): SajuResult {
   }
   const tenGods = computeTenGods(pillars);
   const elements = computeElementBalance(pillars);
+  const strength = computeStrength(pillars, dayMaster, elements);
+  const yongsin = computeYongsin(strength, dayMaster, elements, pillars.month.branch.index);
 
   let daeun: SajuResult["daeun"];
   if (input.daeun) {
@@ -112,5 +125,5 @@ export function computeSaju(input: SajuInput): SajuResult {
     }
   }
 
-  return { input, trueSolarTime: tst, pillars, dayMaster, tenGods, elements, daeun, warnings };
+  return { input, trueSolarTime: tst, pillars, dayMaster, tenGods, elements, strength, yongsin, daeun, warnings };
 }

@@ -6,10 +6,11 @@
 import { describe, it, expect } from "vitest";
 import { computeSaju } from "../src/index.js";
 import { computeTrueSolarTime } from "../src/time/trueSolarTime.js";
-import { tenGodOf, computeTenGods } from "../src/analysis.js";
+import { tenGodOf, computeTenGods, computeElementBalance } from "../src/analysis.js";
 import { STEMS, BRANCHES } from "../src/constants.js";
 import type { FourPillars } from "../src/pillars.js";
 import { directionFromConvention } from "../src/daeun.js";
+import { computeStrength, computeYongsin } from "../src/strength.js";
 
 describe("true solar time — longitude & equation of time", () => {
   it("applies ~ -32 min longitude correction for Seoul (127°E vs 135° meridian)", () => {
@@ -156,6 +157,62 @@ describe("dae-un direction & inclusivity", () => {
     // Start age is a sensible positive number under 10.
     expect(r.daeun!.forward!.startAge).toBeGreaterThan(0);
     expect(r.daeun!.forward!.startAge).toBeLessThan(10);
+  });
+});
+
+describe("신강약 (day-master strength) & 용신 candidates", () => {
+  // Sanity chart from the feature spec: 丙寅 / 庚寅 / 庚子 / 丁亥. Day Master 庚 (Yang Metal)
+  // born in the 寅 (Wood) month — metal is 囚 (trapped), rootless, badly outnumbered.
+  // A correct engine MUST land on weak here.
+  const cell = (stemIdx: number, branchIdx: number) => ({
+    ganzhiIndex: 0,
+    stem: STEMS[stemIdx]!,
+    branch: BRANCHES[branchIdx]!,
+  });
+  const pillars: FourPillars = {
+    year: cell(2, 2), // 丙寅
+    month: cell(6, 2), // 庚寅
+    day: cell(6, 0), // 庚子 — Day Master 庚
+    hour: cell(3, 11), // 丁亥
+    sajuYear: 0,
+    monthOffset: 0,
+  };
+  const dm = pillars.day.stem;
+  const elements = computeElementBalance(pillars);
+  const strength = computeStrength(pillars, dm, elements);
+
+  it("weighted balance totals 13 with Fire strongest", () => {
+    const w = elements.weighted;
+    expect(w.wood + w.fire + w.earth + w.metal + w.water).toBe(13);
+    expect(elements.strongest).toBe("fire");
+  });
+
+  it("scores the three classical conditions as all-weak", () => {
+    expect(strength.phase.hanja).toBe("囚"); // metal fighting a wood season
+    expect(strength.hasMonthCommand).toBe(false); // 실령
+    expect(strength.strongRoots).toBe(0); // no metal hidden in any branch — rootless
+    expect(strength.hasRoot).toBe(false); // 실지
+    expect(strength.supportCount).toBe(3); // (metal 2 − 1) + earth 2
+    expect(strength.drainCount).toBe(9); // water 2 + wood 3 + fire 4
+    expect(strength.hasAllies).toBe(false); // 실세
+    expect(strength.conditionsMet).toBe(0);
+  });
+
+  it("verdict is 신약 (weak) — the spec's hard sanity check", () => {
+    expect(strength.verdict).toBe("신약");
+  });
+
+  it("offers divergent 용신 candidates instead of resolving the tension", () => {
+    const y = computeYongsin(strength, dm, elements, pillars.month.branch.index);
+    // 억부: weak DM → feed it (Earth = resource, Metal = companion).
+    expect(y.eokbu.provisional).toBe(true);
+    expect(new Set(y.eokbu.usefulElements)).toEqual(new Set(["earth", "metal"]));
+    // 조후: chart runs hot (Fire dominant) → wants Water.
+    expect(y.johu.climate).toBe("hot");
+    expect(y.johu.candidateElement).toBe("water");
+    // Water is in 억부's avoid set → the two lenses diverge, and we say so.
+    expect(y.diverges).toBe(true);
+    expect(y.note).toMatch(/never a settled answer/);
   });
 });
 

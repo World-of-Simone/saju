@@ -397,5 +397,5 @@ input:focus { outline: none; border-bottom-color: var(--accent); }
 .tooltip .tt-title .tt-ko { color: var(--gold); font-weight: 500; margin-left: 0.35rem; }
 
 /* ---- Footer (sits on the dark canvas → light ink) ---- */
-.footer { text-align: center; margin-top: 3.5rem; font-size: 0.8rem; color: #b7ad92; line-height: 1.65; }
+.footer { text-align: center; margin-top: 3.5rem; font-size: 0.95rem; color: #b7ad92; line-height: 1.7; }
 .footer a { color: var(--gold); }

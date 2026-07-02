@@ -249,6 +249,33 @@ function buildChartText(r: SajuResult, place: string): string {
   );
   L.push("");
 
+  const st = r.strength;
+  L.push("── DAY MASTER STRENGTH (신강약) ──");
+  L.push("Deterministic: three classical tests, then a verdict.");
+  L.push(`Verdict: ${st.verdict}${st.borderline ? " (borderline / mixed — weigh by hand)" : ""}`);
+  L.push(`Month phase (旺相休囚死): ${st.phase.hangul} ${st.phase.hanja} — ${st.phase.en}`);
+  L.push(`  득령 (month command): ${st.hasMonthCommand ? "yes" : "no"}`);
+  L.push(`  득지 (rootedness/통근): ${st.hasRoot ? "yes" : "no"} — ${st.strongRoots} strong root(s), ${st.resourceRoots} resource root(s)`);
+  L.push(`  득세 (allies): ${st.hasAllies ? "yes" : "no"} — support ${st.supportCount} vs drain ${st.drainCount}`);
+  L.push("");
+
+  const y = r.yongsin;
+  const els = (arr: Element[]) => arr.map((k) => ELEMENT_EN[k]).join(", ");
+  L.push("── USEFUL GOD CANDIDATES (용신 · PROVISIONAL) ──");
+  L.push("Interpretive and school-dependent — these are CANDIDATES to start a human reading, not a verdict.");
+  L.push(`억부 (support/suppress) candidate — favorable: ${els(y.eokbu.usefulElements)}; unfavorable: ${els(y.eokbu.avoidElements)}`);
+  L.push(`  ${y.eokbu.rationale}`);
+  L.push(
+    y.johu.tension
+      ? `조후 (climate) candidate — chart runs ${y.johu.climate}; wants: ${y.johu.candidateElement ? ELEMENT_EN[y.johu.candidateElement] : "—"}`
+      : "조후 (climate) candidate — climate looks balanced; no forced candidate.",
+  );
+  L.push(`  ${y.johu.rationale}`);
+  if (y.diverges) {
+    L.push("⚠ The 억부 and 조후 candidates DIVERGE. This tension is intentional — a practitioner weighs the whole chart rather than picking one automatically.");
+  }
+  L.push("");
+
   if (r.daeun && (r.daeun.forward || r.daeun.reverse)) {
     L.push("── LUCK PILLARS (대운 · Dae-un) ──");
     L.push("Ten-year seasons that layer over the natal chart; start age comes from birth's distance to the neighboring solar terms.");
@@ -369,7 +396,7 @@ function renderPillars(r: SajuResult): string {
   const monthCard = pillarCard("Month", "월주", P.month, T.month, false);
   const yearCard = pillarCard("Year", "연주", P.year, T.year, false);
   return `<section class="card result-section">
-    <h3>Four Pillars <span class="ko">${term("사주 · Saju", "saju")}</span></h3>
+    <h3><span class="h3-ko">${term("사주", "saju")}</span><span class="h3-en">Four Pillars · Saju</span></h3>
     <div class="pillars">${hourCard}${dayCard}${monthCard}${yearCard}</div>
     <p class="el-note">Read right→left (Year → Hour). The highlighted <b>Day Master</b> (${term("일간", "ilgan")}) is “you”; every ${term("Ten God", "sipseong")} label describes how that character relates to you.</p>
   </section>`;
@@ -382,7 +409,7 @@ function renderTST(r: SajuResult): string {
   const clock = `${ts.year}-${pad(ts.month)}-${pad(ts.day)} ${pad(ts.hour)}:${pad(ts.minute)}`;
   const row = (k: string, v: string) => `<div class="tst-item"><span class="k">${k}</span><span class="v">${v}</span></div>`;
   return `<section class="card result-section">
-    <h3>${term("True Solar Time", "jintaeyangsi")} <span class="ko">진태양시</span></h3>
+    <h3><span class="h3-ko">${term("진태양시", "jintaeyangsi")}</span><span class="h3-en">True Solar Time</span></h3>
     <div class="tst-grid">
       ${row("UTC offset applied", fmt(t.utcOffsetMinutes / 60, 2) + " h" + (t.isDST ? " (DST)" : ""))}
       ${row("Longitude correction", fmt(t.longitudeCorrectionMinutes) + " min")}
@@ -414,10 +441,53 @@ function renderElements(r: SajuResult): string {
       ? `<p class="el-note">Missing (not visible in the eight characters): <b>${e.missing.map((m) => ELEMENT_EN[m]).join(", ")}</b>. A missing element is often the most telling part of a reading.</p>`
       : `<p class="el-note">All five elements are represented.</p>`;
   return `<section class="card result-section">
-    <h3>Five Elements <span class="ko">${term("오행 · Ohaeng", "ohaeng")}</span></h3>
+    <h3><span class="h3-ko">${term("오행", "ohaeng")}</span><span class="h3-en">Five Elements · Ohaeng</span></h3>
     <div class="el-bars">${bars}</div>
     <p class="el-note">Weighted count includes ${term("hidden stems", "jijanggan")}. Strongest: <b class="${elClass(e.strongest)}">${ELEMENT_EN[e.strongest]}</b> · Weakest: <b class="${elClass(e.weakest)}">${ELEMENT_EN[e.weakest]}</b>.</p>
     ${missing}
+  </section>`;
+}
+
+function renderStrength(r: SajuResult): string {
+  const st = r.strength;
+  const y = r.yongsin;
+  const chip = (ko: string, en: string, ok: boolean) =>
+    `<span class="cond ${ok ? "cond-yes" : "cond-no"}">${ko} <small>${en}</small> ${ok ? "✓" : "✕"}</span>`;
+  const pill = (arr: Element[]) =>
+    arr.map((k) => `<span class="yong-el ${elClass(k)}">${ELEMENT_EN[k]}</span>`).join(" ");
+
+  return `<section class="card result-section">
+    <h3><span class="h3-ko">${term("신강약", "singangyak")}</span><span class="h3-en">Day Master Strength · Singangyak</span></h3>
+    <p class="strength-verdict">Verdict: <b class="${elClass(r.dayMaster.element)}">${st.verdict}</b>${st.borderline ? ' <span class="el-note" style="font-weight:400">(borderline — a genuinely mixed chart)</span>' : ""}</p>
+    <div class="cond-row">
+      ${chip(term("득령", "deukryeong"), "month command", st.hasMonthCommand)}
+      ${chip(term("득지", "tongeun"), "rootedness", st.hasRoot)}
+      ${chip("득세", "allies", st.hasAllies)}
+    </div>
+    <p class="el-note">Month phase ${term("旺相休囚死", "deukryeong")}: <b>${st.phase.hangul} ${st.phase.hanja}</b> — ${esc(st.phase.en)}. Roots: ${st.strongRoots} strong, ${st.resourceRoots} resource. Allies: support ${st.supportCount} vs drain ${st.drainCount}. This part is deterministic.</p>
+
+    <h4 class="yong-head">${term("Useful God", "yongsin")} candidates <span class="provisional-tag">provisional</span></h4>
+    <p class="el-note">Choosing a ${term("용신", "yongsin")} is interpretive and school-dependent, so these are starting points — not a verdict.</p>
+    <div class="yong-grid">
+      <div class="yong-card">
+        <div class="yong-title">${term("억부", "eokbu")} · support/suppress</div>
+        <div class="yong-line">Favorable: ${pill(y.eokbu.usefulElements)}</div>
+        <div class="yong-line yong-avoid">Unfavorable: ${pill(y.eokbu.avoidElements)}</div>
+      </div>
+      <div class="yong-card">
+        <div class="yong-title">${term("조후", "johu")} · climate</div>
+        ${
+          y.johu.tension && y.johu.candidateElement
+            ? `<div class="yong-line">Runs <b>${y.johu.climate}</b>; wants ${pill([y.johu.candidateElement])}</div>`
+            : `<div class="yong-line">Climate looks balanced — no forced candidate.</div>`
+        }
+      </div>
+    </div>
+    ${
+      y.diverges
+        ? `<p class="yong-diverge">⚠ The 억부 and 조후 candidates <b>diverge</b>. That tension is intentional — a practitioner weighs the whole chart rather than letting the calculator pick one.</p>`
+        : ""
+    }
   </section>`;
 }
 
@@ -444,7 +514,7 @@ function renderDaeun(r: SajuResult): string {
   if (r.daeun.forward) inner += daeunBlock("Forward (순행)", r.daeun.forward);
   if (r.daeun.reverse) inner += daeunBlock("Reverse (역행)", r.daeun.reverse);
   return `<section class="card result-section">
-    <h3>${term("Luck Pillars", "daeun")} <span class="ko">대운 · Dae-un</span></h3>
+    <h3><span class="h3-ko">${term("대운", "daeun")}</span><span class="h3-en">Luck Pillars · Dae-un</span></h3>
     ${inner}
     <div class="inclusivity">Each 10-year pillar layers over your natal chart. Yours run <b>${dir}</b> — a direction the classical system derives from your birth-year polarity together with the gender you chose; the start age comes from your birth's distance to the neighboring solar terms. This is one interpretive lens, not a fixed forecast — recompute with the other gender any time to compare.</div>
   </section>`;
@@ -465,6 +535,7 @@ function render(r: SajuResult, place: string) {
     renderPillars(r) +
     renderTST(r) +
     renderElements(r) +
+    renderStrength(r) +
     renderDaeun(r);
   out.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }

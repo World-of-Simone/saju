@@ -27,7 +27,14 @@ function gz(p: { stem: { hanja: string }; branch: { hanja: string } }): string {
   return p.stem.hanja + p.branch.hanja;
 }
 
-describe("four pillars vs lunar-python", () => {
+// QUARANTINED (Phase 1): this comparison was built around the old true-solar/UTC+8 path
+// (timezone UTC+8 + longitude 120 so the longitude correction cancels the offset). Under
+// Master Kim's method the engine ignores timezone/longitude/true-solar and reads the raw
+// clock in the KST 만세력 frame, so a lunar-python cross-check is no longer the right oracle.
+// Spec §9 is explicit that the AI-generated lunar_python.json must NOT be trusted and is to
+// be replaced with practitioner-corrected reference charts (Simone, Julie, Sam, Carter, 현준)
+// in Phase 5. Re-enable with those fixtures then.
+describe.skip("four pillars vs lunar-python (superseded by practitioner fixtures — Phase 5)", () => {
   for (const c of ref.cases) {
     it(`${c.y}-${c.m}-${c.d} ${c.h}:00 -> ${c.year} ${c.month} ${c.day} ${c.time}`, () => {
       const r = computeSaju({

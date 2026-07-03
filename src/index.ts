@@ -1,8 +1,15 @@
 /**
- * saju-engine — accurate Korean Four Pillars (사주) calculation with true solar time.
+ * saju-engine — Korean Four Pillars (사주) under Master Kim's method.
+ *
+ * Her governing rule: build to her method, not to astronomical correctness. Pillars are
+ * computed from the RAW recorded clock — no true solar time, no timezone/DST conversion, no
+ * longitude. The one mandatory precision is the 절기 (solar-term) boundary. The astronomical
+ * true-solar/IANA calculation is preserved ONLY as an off-by-default diagnostic for
+ * comparison (never feeds the chart or the reading agent).
  *
  * Public entry point: `computeSaju(input)`.
  */
+import { resolveSajuTime, type SajuClockInput } from "./time/sajuTime.js";
 import { computeTrueSolarTime, type CivilInput, type TrueSolarTimeResult } from "./time/trueSolarTime.js";
 import { computeFourPillars, type FourPillars } from "./pillars.js";
 import { boundaryProximity } from "./astro/solarTerms.js";
@@ -28,18 +35,31 @@ import type { Stem } from "./constants.js";
 
 export * from "./constants.js";
 export * from "./glossary.js";
+export type { SajuClockInput } from "./time/sajuTime.js";
 export type { CivilInput, TrueSolarTimeResult } from "./time/trueSolarTime.js";
 export type { FourPillars, Pillar } from "./pillars.js";
 export type { TenGodsResult, ElementBalance } from "./analysis.js";
 export type { DaeunResult, DaeunDirection } from "./daeun.js";
 export type { StrengthResult, YongsinResult } from "./strength.js";
 
-export interface SajuInput extends CivilInput {
+export interface SajuInput extends SajuClockInput {
   /**
    * Set false when the birth time is unknown. The Hour Pillar and (unless a direction is
    * given) dae-un are omitted rather than guessed.
    */
   hasBirthTime?: boolean;
+  /**
+   * Birthplace reference only — under her method it does NOT feed a timezone or longitude
+   * correction. Supplied purely so the astronomical diagnostic (below) can be computed.
+   */
+  timezone?: string;
+  longitude?: number;
+  /**
+   * Off by default. When true (and timezone + longitude are given), also compute the
+   * astronomical true-solar/IANA chart for comparison. It NEVER drives the pillars and is
+   * never fed to the reading agent — it is a developer diagnostic only.
+   */
+  diagnostics?: boolean;
   daeun?: {
     /**
      * Explicit direction avoids forcing a binary gender. Pass "both" to compute forward AND
@@ -57,7 +77,11 @@ export interface SajuInput extends CivilInput {
 
 export interface SajuResult {
   input: SajuInput;
-  trueSolarTime: TrueSolarTimeResult;
+  /**
+   * Astronomical true-solar/IANA comparison. Present ONLY when `diagnostics` is requested;
+   * it does not affect the pillars and must never be fed to the reading agent.
+   */
+  trueSolarTime?: TrueSolarTimeResult;
   pillars: FourPillars;
   dayMaster: Stem;
   tenGods: TenGodsResult;
@@ -82,14 +106,24 @@ export function computeSaju(input: SajuInput): SajuResult {
     warnings.push("Birth time unknown: Hour Pillar omitted; chart computed with 3 pillars.");
   }
 
-  const tst = computeTrueSolarTime(input);
-  const pillars = computeFourPillars(tst, hasBirthTime);
+  const time = resolveSajuTime(input);
+  const pillars = computeFourPillars(time, hasBirthTime);
   const dayMaster = pillars.day.stem;
+
+  // Off-by-default astronomical diagnostic (never drives the pillars, never fed to the agent).
+  let trueSolarTime: TrueSolarTimeResult | undefined;
+  if (input.diagnostics && input.timezone && input.longitude != null) {
+    trueSolarTime = computeTrueSolarTime({
+      year: input.year, month: input.month, day: input.day,
+      hour: input.hour, minute: input.minute, second: input.second,
+      timezone: input.timezone, longitude: input.longitude,
+    });
+  }
 
   // The VSOP87-based solar longitude puts solar-term instants within ~20 seconds, so the
   // remaining risk near a boundary is the accuracy of the RECORDED birth time. Warn when the
   // birth falls within 5 min of a month/year boundary so a rounded/uncertain time can be checked.
-  const proximity = boundaryProximity(tst.jdUt, pillars.monthOffset);
+  const proximity = boundaryProximity(time.jdUt, pillars.monthOffset);
   if (proximity.nearestMinutes < 5) {
     warnings.push(
       `Birth is only ~${Math.round(proximity.nearestMinutes)} min from a solar-term (월/절기) ` +
@@ -119,11 +153,11 @@ export function computeSaju(input: SajuInput): SajuResult {
 
     daeun = { inclusivityNote: INCLUSIVITY_NOTE };
     for (const d of directions) {
-      const r = computeDaeun(pillars, tst.jdUt, pillars.monthOffset, { direction: d, count });
+      const r = computeDaeun(pillars, time.jdUt, pillars.monthOffset, { direction: d, count });
       if (d === "forward") daeun.forward = r;
       else daeun.reverse = r;
     }
   }
 
-  return { input, trueSolarTime: tst, pillars, dayMaster, tenGods, elements, strength, yongsin, daeun, warnings };
+  return { input, trueSolarTime, pillars, dayMaster, tenGods, elements, strength, yongsin, daeun, warnings };
 }

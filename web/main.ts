@@ -57,7 +57,7 @@ const STATIC: Record<Lang, Record<string, string>> = {
     hero_tagline:
       "Saju is ancient Korean art that reads your life from the pattern the sky held at the hour you were born, arranged into a portrait of your character, your closest relationships, and the seasons your luck moves through.",
     hero_precision:
-      "This Saju calculator was built to be more astronomically precise than typical online calculators. Solar-term timings are computed to the second, and time zones and historical daylight saving are resolved through the IANA database.",
+      "This calculator follows a Korean master's method: your pillars are read from the clock time you were born at, exactly as recorded — no timezone, daylight-saving, or true-solar adjustment. The one place it insists on precision is the 절기 (solar-term) boundaries that set your month pillar, computed to the second; the year turns at 입춘 and the day at 23:00.",
     hero_cta:
       'Enter four details<a href="#accuracy-note" class="asterisk">*</a> and cast your chart.',
     form_title: "Your birth details",
@@ -70,7 +70,7 @@ const STATIC: Record<Lang, Record<string, string>> = {
     f_place: "Birthplace",
     f_place_ph: "Start typing a city…",
     f_place_hint:
-      "Used to place the Sun and to pick the time zone that was actually in effect where you were born.",
+      "Recorded for reference only — under this method your birthplace does not adjust the time or change the pillars.",
     f_adv: "Advanced: set longitude & timezone manually",
     f_lon: "Longitude (° east +)",
     f_tz: "IANA timezone",
@@ -93,7 +93,7 @@ const STATIC: Record<Lang, Record<string, string>> = {
     hero_tagline:
       "사주는 당신이 태어난 시각에 하늘이 품고 있던 무늬로부터 삶을 읽어내는 한국의 오래된 예술로, 당신의 성품과 가장 가까운 관계들, 그리고 운이 흐르는 계절들을 하나의 초상으로 그려냅니다.",
     hero_precision:
-      "이 사주 계산기는 일반적인 온라인 계산기보다 천문학적으로 더 정밀하도록 만들어졌습니다. 절기 시각은 초 단위까지 계산되며, 시간대와 과거의 일광 절약 시간은 IANA 데이터베이스를 통해 확인됩니다.",
+      "이 계산기는 한국 선생님의 방식을 따릅니다: 기둥은 기록된 출생 시각을 있는 그대로 읽으며, 시간대·일광절약·진태양시 보정을 적용하지 않습니다. 정밀함을 고집하는 단 한 곳은 월주를 정하는 절기 경계로, 초 단위까지 계산됩니다. 해는 입춘에, 날은 23시에 바뀝니다.",
     hero_cta:
       '네 가지 정보<a href="#accuracy-note" class="asterisk">*</a>를 입력하고 사주를 뽑아 보세요.',
     form_title: "출생 정보",
@@ -106,7 +106,7 @@ const STATIC: Record<Lang, Record<string, string>> = {
     f_place: "출생지",
     f_place_ph: "도시 이름을 입력하세요…",
     f_place_hint:
-      "태양의 위치를 정하고, 태어난 곳에서 실제로 적용되던 시간대를 고르는 데 사용됩니다.",
+      "참고용으로만 기록됩니다 — 이 방식에서는 출생지가 시간을 보정하거나 기둥을 바꾸지 않습니다.",
     f_adv: "고급: 경도와 시간대 직접 설정",
     f_lon: "경도 (동경 +)",
     f_tz: "IANA 시간대",
@@ -297,15 +297,12 @@ function daeunText(d: DaeunResult): string {
 
 function buildChartText(r: SajuResult, place: string): string {
   const inp = r.input;
-  const t = r.trueSolarTime;
-  const ts = t.trueSolar;
   const e = r.elements;
   const order: Element[] = ["wood", "fire", "earth", "metal", "water"];
 
   const bd = `${inp.year}-${pad2(inp.month)}-${pad2(inp.day)}`;
   const known = inp.hasBirthTime !== false;
   const timeStr = known ? `${pad2(inp.hour)}:${pad2(inp.minute)}` : tr("unknown", "모름");
-  const trueClock = `${ts.year}-${pad2(ts.month)}-${pad2(ts.day)} ${pad2(ts.hour)}:${pad2(ts.minute)}`;
   const sex = inp.daeun?.fromConvention?.sex;
   const els = (arr: Element[]) => arr.map((m) => elName(m)).join(", ");
 
@@ -315,14 +312,16 @@ function buildChartText(r: SajuResult, place: string): string {
   L.push("");
   L.push(
     tr(
-      "I'm sharing my Saju (Korean Four Pillars) chart below. It was calculated from true solar time — " +
-        "the Sun's actual position over my birthplace — with the year boundary at 입춘 (Start of Spring) and " +
-        "month boundaries at the 12 solar terms, so it's more astronomically precise than typical calculators. " +
+      "I'm sharing my Saju (Korean Four Pillars) chart below. It follows a Korean master's method: " +
+        "the pillars are read from my recorded clock time exactly as written — no timezone, daylight-saving, " +
+        "or true-solar adjustment — with the year boundary at 입춘 (Start of Spring), the month boundaries at " +
+        "the 12 solar terms (절기, computed to the minute), and the day rolling over at 23:00. " +
         "Please read it as an interpretive art: a lens for self-reflection and contemplation, not a fixed " +
         "prediction or a verdict about who I am. Walk me through what stands out and what it might mean, and " +
         "keep the framing exploratory. Feel free to ask me questions back.",
-      "아래는 제 사주(四柱) 명식입니다. 진태양시 — 태어난 곳에서의 태양의 실제 위치 — 를 기준으로, " +
-        "해의 경계는 입춘, 달의 경계는 12절기로 삼아 계산했기에 일반적인 계산기보다 천문학적으로 더 정밀합니다. " +
+      "아래는 제 사주(四柱) 명식입니다. 한국 선생님의 방식을 따릅니다: 기둥은 기록된 시계 시각을 있는 그대로 " +
+        "읽으며 — 시간대·일광절약·진태양시 보정을 적용하지 않습니다 — 해의 경계는 입춘, 달의 경계는 12절기(분 단위까지 계산), " +
+        "날의 경계는 23시로 삼습니다. " +
         "이것을 결정된 예언이나 저에 대한 판결이 아니라, 성찰과 관조를 위한 해석의 예술로 읽어 주세요. " +
         "무엇이 두드러지고 그것이 무엇을 뜻할 수 있는지 탐구적인 태도로 짚어 주시고, 저에게 되물어 주셔도 좋습니다.",
     ),
@@ -332,16 +331,9 @@ function buildChartText(r: SajuResult, place: string): string {
   L.push(tr("── BIRTH DETAILS ──", "── 출생 정보 ──"));
   L.push(`${tr("Date", "생년월일")}: ${bd}`);
   L.push(
-    `${tr("Time", "시각")}: ${timeStr}${known ? tr(" (local clock time as recorded)", " (기록된 현지 시계 시각)") : tr(" (Hour Pillar omitted)", " (시주 생략)")}`,
+    `${tr("Time", "시각")}: ${timeStr}${known ? tr(" (recorded clock time, used as-is)", " (기록된 시계 시각, 그대로 사용)") : tr(" (Hour Pillar omitted)", " (시주 생략)")}`,
   );
-  L.push(`${tr("Birthplace", "출생지")}: ${place || tr("(unspecified)", "(미지정)")} (${tr("longitude", "경도")} ${inp.longitude}° E)`);
-  L.push(`${tr("Timezone", "시간대")}: ${inp.timezone} (UTC${fmt(t.utcOffsetMinutes / 60, 2)}${t.isDST ? tr(", DST in effect", ", 일광절약 적용") : ""})`);
-  if (known) {
-    L.push(`${tr("True solar birth moment", "진태양시 출생 순간")}: ${trueClock}`);
-    L.push(
-      `  ${tr("Longitude correction", "경도 보정")} ${fmt(t.longitudeCorrectionMinutes)} ${tr("min", "분")} · ${tr("Equation of Time", "균시차")} ${fmt(t.equationOfTimeMinutes)} ${tr("min", "분")} · ${tr("net shift vs clock", "시계 대비 순보정")} ${fmt(t.totalCorrectionMinutes)} ${tr("min", "분")}`,
-    );
-  }
+  L.push(`${tr("Birthplace", "출생지")}: ${place || tr("(unspecified)", "(미지정)")} ${tr("(reference only — not used to adjust the time)", "(참고용 — 시간 보정에 사용되지 않음)")}`);
   if (sex) L.push(`${tr("Gender used for luck-pillar direction (classical binary rule)", "대운 방향에 사용된 성별 (고전 이분법)")}: ${tr(sex, sex === "male" ? "남성" : "여성")}`);
   L.push("");
 
@@ -561,7 +553,9 @@ function renderPillars(r: SajuResult): string {
 }
 
 function renderTST(r: SajuResult): string {
+  // Astronomical diagnostic only — absent under her method, so this panel is omitted.
   const t = r.trueSolarTime;
+  if (!t) return "";
   const ts = t.trueSolar;
   const pad = (n: number) => String(n).padStart(2, "0");
   const clock = `${ts.year}-${pad(ts.month)}-${pad(ts.day)} ${pad(ts.hour)}:${pad(ts.minute)}`;

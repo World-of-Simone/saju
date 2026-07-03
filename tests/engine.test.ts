@@ -64,19 +64,27 @@ describe("historical timezone / DST resolution", () => {
   });
 });
 
-describe("split 자시 (야자시/조자시) day boundary", () => {
-  const base = { year: 2024, month: 6, day: 10, timezone: "UTC+8", longitude: 120 } as const;
+describe("23:00 day rollover (no 야자시/조자시 split)", () => {
+  // Her method: 무조건 열한시부터는 다음 날로. From 23:00 the branches restart at 子 AND the
+  // Day Pillar advances — the older 야자시/정자시 distinction is discarded. Raw clock only.
+  const base = { year: 2024, month: 6, day: 10 } as const;
 
-  it("23:30 (야자시) keeps the current day; 00:30 (조자시) uses the next day", () => {
-    const late = computeSaju({ ...base, hour: 23, minute: 30 });
-    const early = computeSaju({ ...base, day: 11, hour: 0, minute: 30 });
+  it("23:30 advances the Day Pillar; 00:30 the same date does not", () => {
+    const late = computeSaju({ ...base, hour: 23, minute: 30 }); // 06-10 23:30 → 06-11 자시
+    const early = computeSaju({ ...base, hour: 0, minute: 30 }); // 06-10 00:30 → 06-10 자시
     // Both are the 子 (Ja) hour...
     expect(late.pillars.hour!.branch.hanja).toBe("子");
     expect(early.pillars.hour!.branch.hanja).toBe("子");
-    // ...but the day pillars differ by exactly one (midnight rollover, not 23:00).
-    const d1 = late.pillars.day.ganzhiIndex;
-    const d2 = early.pillars.day.ganzhiIndex;
-    expect((d1 + 1) % 60).toBe(d2);
+    // ...but the 23:30 birth has rolled the Day Pillar exactly one day past the 00:30 birth.
+    const dEarly = early.pillars.day.ganzhiIndex;
+    const dLate = late.pillars.day.ganzhiIndex;
+    expect((dEarly + 1) % 60).toBe(dLate);
+  });
+
+  it("23:30 on day N shares a Day Pillar with 00:30 on day N+1", () => {
+    const lateN = computeSaju({ ...base, hour: 23, minute: 30 }); // 06-10 23:30 → 06-11
+    const earlyNext = computeSaju({ ...base, day: 11, hour: 0, minute: 30 }); // 06-11 00:30 → 06-11
+    expect(lateN.pillars.day.ganzhiIndex).toBe(earlyNext.pillars.day.ganzhiIndex);
   });
 });
 

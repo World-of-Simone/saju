@@ -1,12 +1,16 @@
 /**
- * Four Pillars (사주 / 四柱) assembly from an astronomically-resolved birth instant.
+ * Four Pillars (사주 / 四柱) assembly under Master Kim's method (raw clock, no true-solar).
  *
  * Conventions (locked project decisions):
- *  - Year boundary = 立春 / Ipchun (NOT Lunar New Year).
- *  - Month boundary = the 12 major solar terms (절), from the true apparent Sun longitude.
- *  - Day boundary = midnight in TRUE SOLAR TIME, with split 자시 (야자시/조자시) handled
- *    naturally: the 子 hour spans 23:00–01:00, but the day only rolls at 00:00. A birth at
- *    23:30 keeps the current day's Day Pillar (야자시); 00:30 uses the next day (조자시).
+ *  - Year boundary = 立春 / Ipchun (NOT Lunar New Year), from the apparent Sun longitude.
+ *  - Month boundary = the 12 major solar terms (절), to the minute, from the Sun longitude.
+ *  - Day boundary = 23:00 rolls to the NEXT day, ALWAYS. No 야자시/조자시 split: from 11pm
+ *    the branches restart at 子 (자시) AND the Day Pillar advances a day. A 23:30 birth is
+ *    read as the next day's 자시.
+ *  - Hour = the 2-hour 시 branch from the RAW clock, where 子 (자시) begins at 23:00.
+ *
+ * The birth instant used for 절기/입춘 is the raw clock interpreted as KST (see sajuTime.ts);
+ * no longitude, equation-of-time, timezone, or DST correction is applied to the wall clock.
  */
 import {
   STEMS,
@@ -19,7 +23,7 @@ import {
 import { julianDayNumber, norm360 } from "./astro/julian.js";
 import { solarLongitude } from "./astro/sun.js";
 import { ipchunJD } from "./astro/solarTerms.js";
-import type { TrueSolarTimeResult } from "./time/trueSolarTime.js";
+import type { SajuTimeResult } from "./time/sajuTime.js";
 
 /**
  * Day-Pillar calibration constant: sexagenary day index = (JDN + DAY_GANZHI_OFFSET) mod 60,
@@ -49,11 +53,15 @@ function pillarFromStemBranch(stemIndex: number, branchIndex: number): Pillar {
   return { ganzhiIndex: ganzhi, stem: STEMS[s]!, branch: BRANCHES[b]! };
 }
 
-/** Day Pillar from the true-solar calendar date. */
-export function dayPillar(tstYear: number, tstMonth: number, tstDay: number): Pillar {
-  const jdn = julianDayNumber(tstYear, tstMonth, tstDay);
+/** Day Pillar from an integer Julian Day Number (already 23:00-rolled by the time layer). */
+export function dayPillarFromJdn(jdn: number): Pillar {
   const idx = ((jdn + DAY_GANZHI_OFFSET) % 60 + 60) % 60;
   return { ganzhiIndex: idx, stem: STEMS[idx % 10]!, branch: BRANCHES[idx % 12]! };
+}
+
+/** Day Pillar from a calendar date (noon convention; no 23:00 rollover applied here). */
+export function dayPillar(year: number, month: number, day: number): Pillar {
+  return dayPillarFromJdn(julianDayNumber(year, month, day));
 }
 
 /**
@@ -108,14 +116,12 @@ export interface FourPillars {
   monthOffset: number;
 }
 
-/** Assemble all four pillars from a resolved true-solar-time result. */
-export function computeFourPillars(tst: TrueSolarTimeResult, hasBirthTime: boolean): FourPillars {
-  const { year: ty, month: tm, day: td, fractionalHour } = tst.trueSolar;
-
-  const { pillar: year, sajuYear } = yearPillar(tst.jdUt, ty);
-  const { pillar: month, monthOffset } = monthPillar(tst.jde, year.stem.index);
-  const day = dayPillar(ty, tm, td);
-  const hour = hasBirthTime ? hourPillar(fractionalHour, day.stem.index) : null;
+/** Assemble all four pillars from a resolved her-method time result. */
+export function computeFourPillars(t: SajuTimeResult, hasBirthTime: boolean): FourPillars {
+  const { pillar: year, sajuYear } = yearPillar(t.jdUt, t.clock.year);
+  const { pillar: month, monthOffset } = monthPillar(t.jde, year.stem.index);
+  const day = dayPillarFromJdn(t.dayJdn);
+  const hour = hasBirthTime ? hourPillar(t.fractionalHour, day.stem.index) : null;
 
   return { year, month, day, hour, sajuYear, monthOffset };
 }

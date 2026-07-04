@@ -360,6 +360,24 @@ input:focus { outline: none; border-bottom-color: var(--accent); }
 }
 @media (max-width: 520px) { .yong-grid { grid-template-columns: 1fr; } }
 
+/* ---------- relations (공망 · 신살 · 지지관계) ---------- */
+.rel-list { display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.4rem; }
+.rel-row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem;
+  padding: 0.35rem 0.6rem; border: 1px solid var(--line-soft); background: var(--paper-2);
+}
+.rel-pos { font-size: 0.78rem; color: var(--ink-soft); font-family: var(--font-sans); text-transform: uppercase; letter-spacing: 0.04em; }
+.rel-star, .rel-combo { font-family: var(--font-cjk); font-size: 0.98rem; color: var(--ink); }
+.rel-hanja { color: var(--ink-soft); font-size: 0.85rem; }
+.rel-meta { font-size: 0.82rem; color: var(--ink-soft); font-family: var(--font-sans); text-align: right; }
+.rel-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+.rel-chip {
+  font-family: var(--font-cjk); font-size: 0.9rem; color: var(--ink);
+  border: 1px solid var(--line-soft); background: var(--paper-2);
+  padding: 0.22rem 0.55rem;
+}
+.rel-chip small { font-family: var(--font-sans); color: var(--ink-soft); font-size: 0.72rem; }
+
 /* Teaching terms */
 .term { border-bottom: 1px dotted var(--accent-soft); cursor: help; }
 

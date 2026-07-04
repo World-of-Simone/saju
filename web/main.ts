@@ -42,6 +42,11 @@ const POLARITY_LABEL: Record<Lang, Record<"yang" | "yin", string>> = {
   ko: { yang: "양(陽)", yin: "음(陰)" },
 };
 const polName = (p: "yang" | "yin") => POLARITY_LABEL[lang][p];
+const POS_LABEL: Record<Lang, Record<"year" | "month" | "day" | "hour", string>> = {
+  en: { year: "Year", month: "Month", day: "Day", hour: "Hour" },
+  ko: { year: "연주", month: "월주", day: "일주", hour: "시주" },
+};
+const posName = (p: "year" | "month" | "day" | "hour") => POS_LABEL[lang][p];
 
 /** Static page copy (index.html), filled in by data-i18n attributes. */
 const STATIC: Record<Lang, Record<string, string>> = {
@@ -293,6 +298,53 @@ function buildChartText(r: SajuResult): string {
   L.push(
     `${tr("Season", "계절")}: ${tr(j.en, j.hangul)} (${j.hangul}/${j.hanja}) — ${tr("from the", "월지")} ${j.monthBranchHanja} ${tr("month branch", "기준")}` +
       (j.seasonOpener ? tr(" (a 生地 season-opener, read back one season as the climate lags)", " (生地 절기 시작월 — 기후 지연으로 한 계절 뒤로 읽음)") : ""),
+  );
+  L.push("");
+
+  const rel = r.relations;
+  L.push(tr("── VOID, SPIRIT STARS & BRANCH RELATIONS (공망 · 신살 · 지지관계) ──", "── 공망 · 신살 · 지지관계 ──"));
+  L.push(
+    tr(
+      "These are chart FACTS for the reading to locate and interpret; the engine draws no conclusions from them. Only reliable stars are listed (the twelve 십이신살 + 효신살/괴강/양인); decorative label-stars are omitted.",
+      "이것들은 풀이가 찾아 해석할 명식의 사실입니다; 엔진은 결론을 내지 않습니다. 믿을 만한 신살만 나열합니다 (십이신살 + 효신살/괴강/양인); 장식적 이름살은 제외합니다.",
+    ),
+  );
+  // 공망
+  L.push(
+    `${tr("Void (공망)", "공망")}: ${rel.void.branches.map((b) => `${b.hangul}(${b.hanja})`).join(" · ")}` +
+      (rel.void.hits.length
+        ? tr(
+            ` — lands on the ${rel.void.hits.map((h) => POS_LABEL.en[h.pos]).join(", ")} palace(s); read that palace as hollow.`,
+            ` — ${rel.void.hits.map((h) => POS_LABEL.ko[h.pos]).join(", ")} 자리에 놓임; 그 자리는 비어 있음으로 읽습니다.`,
+          )
+        : tr(" — not sitting on any of the four palaces.", " — 네 기둥 어디에도 놓이지 않음.")),
+  );
+  // 십이신살 per palace
+  L.push(
+    `${tr("Twelve stars (십이신살, from year branch)", "십이신살 (연지 기준)")}: ` +
+      rel.sinsal.twelve.map((t) => `${tr(POS_LABEL.en[t.at.pos], POS_LABEL.ko[t.at.pos])}=${t.hangul}(${t.hanja})`).join(" · "),
+  );
+  // special stars
+  const specials: string[] = [];
+  for (const h of rel.sinsal.hyosin) specials.push(`${h.hangul}(${tr(POS_LABEL.en[h.at.pos], POS_LABEL.ko[h.at.pos])})`);
+  for (const g of rel.sinsal.gwaegang) specials.push(`${g.hangul} ${g.hanja}(${tr(POS_LABEL.en[g.pos], POS_LABEL.ko[g.pos])})`);
+  for (const y of rel.sinsal.yangin) specials.push(`${y.hangul}(${tr(POS_LABEL.en[y.at.pos], POS_LABEL.ko[y.at.pos])})`);
+  L.push(`${tr("Special stars", "특수 신살")}: ${specials.length ? specials.join(" · ") : tr("none", "없음")}`);
+  // combinations
+  L.push(
+    `${tr("Branch combinations (삼합/방합)", "삼합/방합")}: ` +
+      (rel.branchRelations.combinations.length
+        ? rel.branchRelations.combinations
+            .map((c) => `${c.hangul}(${c.hanja}) ${c.degree === "full" ? tr("full", "완성") : tr("half/반합", "반합")} ${c.kind === "samhap" ? "삼합" : "방합"}→${elName(c.element as Element)}`)
+            .join(" · ")
+        : tr("none", "없음")),
+  );
+  // clashes
+  L.push(
+    `${tr("Clashes (충)", "충")}: ` +
+      (rel.branchRelations.clashes.length
+        ? rel.branchRelations.clashes.map((c) => `${c.hangul}(${c.hanja}) ${tr(POS_LABEL.en[c.a.pos], POS_LABEL.ko[c.a.pos])}↔${tr(POS_LABEL.en[c.b.pos], POS_LABEL.ko[c.b.pos])}`).join(" · ")
+        : tr("none", "없음")),
   );
   L.push("");
 
@@ -560,6 +612,116 @@ function renderDaeun(r: SajuResult): string {
   </section>`;
 }
 
+function renderRelations(r: SajuResult): string {
+  const rel = r.relations;
+  const v = rel.void;
+  const s = rel.sinsal;
+  const br = rel.branchRelations;
+
+  // ── 공망 (void) ──
+  const voidBranches = v.branches.map((b) => `${b.hangul}(${b.hanja})`).join(" · ");
+  const voidHits =
+    v.hits.length > 0
+      ? tr(
+          `Falls on your <b>${v.hits.map((h) => posName(h.pos)).join(", ")}</b> palace — that palace is read as “hollow”: present in form but thin in substance.`,
+          `당신의 <b>${v.hits.map((h) => posName(h.pos)).join(", ")}</b> 자리에 놓입니다 — 그 자리는 '비어 있음'으로 읽습니다: 형태는 있으나 알맹이가 얕습니다.`,
+        )
+      : tr(
+          "Neither void branch sits on one of your four palaces, so 공망 is quiet in this chart.",
+          "두 공망 지지 모두 네 기둥에 놓이지 않아, 이 명식에서 공망은 조용합니다.",
+        );
+
+  // ── 십이신살 (twelve stars, per palace) ──
+  const twelveRows = s.twelve
+    .map(
+      (t) =>
+        `<div class="rel-row"><span class="rel-pos">${posName(t.at.pos)}</span><span class="rel-star">${t.hangul} <span class="rel-hanja">${t.hanja}</span></span></div>`,
+    )
+    .join("");
+
+  // ── special stars ──
+  const special: string[] = [];
+  for (const h of s.hyosin)
+    special.push(
+      `<span class="rel-chip">${h.hangul} <small>${tr("Owl", "梟神")}</small> · ${posName(h.at.pos)}</span>`,
+    );
+  for (const g of s.gwaegang)
+    special.push(
+      `<span class="rel-chip">${g.hangul} · ${posName(g.pos)} ${g.hanja}</span>`,
+    );
+  for (const y of s.yangin)
+    special.push(
+      `<span class="rel-chip">${y.hangul} <small>${tr("Blade", "陽刃")}</small> · ${posName(y.at.pos)}</span>`,
+    );
+  const specialBlock =
+    special.length > 0
+      ? `<div class="rel-chips">${special.join("")}</div>`
+      : `<p class="el-note">${tr(
+          "None of 효신살 / 괴강 / 양인 are present.",
+          "효신살 / 괴강 / 양인은 없습니다.",
+        )}</p>`;
+
+  // ── 삼합 / 방합 (combinations) ──
+  const comboRows = br.combinations
+    .map((c) => {
+      const kindKo = c.kind === "samhap" ? tr("three-harmony 삼합", "삼합") : tr("directional 방합", "방합");
+      const deg = c.degree === "full" ? tr("full", "완성") : tr("half 반합", "반합");
+      return `<div class="rel-row"><span class="rel-combo ${elClass(c.element as Element)}">${c.hangul} <span class="rel-hanja">${c.hanja}</span></span><span class="rel-meta">${deg} ${kindKo} → ${elName(c.element as Element)}</span></div>`;
+    })
+    .join("");
+  const comboBlock =
+    br.combinations.length > 0
+      ? `<div class="rel-list">${comboRows}</div>`
+      : `<p class="el-note">${tr(
+          "No 삼합 or 방합 branch combinations are formed.",
+          "삼합·방합 결합은 없습니다.",
+        )}</p>`;
+
+  // ── 충 (clashes) ──
+  const clashBlock =
+    br.clashes.length > 0
+      ? `<div class="rel-list">${br.clashes
+          .map(
+            (c) =>
+              `<div class="rel-row"><span class="rel-combo">${c.hangul} <span class="rel-hanja">${c.hanja}</span></span><span class="rel-meta">${tr(
+                `${posName(c.a.pos)} ↔ ${posName(c.b.pos)} clash`,
+                `${posName(c.a.pos)} ↔ ${posName(c.b.pos)} 충`,
+              )}</span></div>`,
+          )
+          .join("")}</div>`
+      : `<p class="el-note">${tr("No branch clashes (충).", "지지 충은 없습니다.")}</p>`;
+
+  return `<section class="card result-section">
+    <h3><span class="h3-ko">${term("신살·관계", "sinsal")}</span><span class="h3-en">${tr(
+      "Void, Spirit Stars & Branch Relations",
+      "공망 · 신살 · 지지 관계",
+    )}</span></h3>
+    <p class="el-note">${tr(
+      `These are <b>facts the reading locates and interprets</b> — the calculator surfaces them but never draws conclusions from them. Only the reliable stars are shown (the twelve ${term("십이신살", "sinsal")} plus ${term("효신살", "sinsal")} / ${term("괴강", "sinsal")} / ${term("양인", "sinsal")}); decorative label-stars are deliberately left out.`,
+      `이것들은 <b>풀이가 찾아 해석하는 사실</b>입니다 — 계산기는 드러낼 뿐 결론을 내리지 않습니다. 믿을 만한 신살만 표시합니다 (${term("십이신살", "sinsal")}과 ${term("효신살", "sinsal")}/${term("괴강", "sinsal")}/${term("양인", "sinsal")}); 장식적 이름살은 의도적으로 제외합니다.`,
+    )}</p>
+
+    <h4 class="yong-head">${term("공망", "gongmang")} · ${tr("Void", "공망")}</h4>
+    <p class="strength-verdict">${tr("Void branches", "공망 지지")}: <b>${voidBranches}</b></p>
+    <p class="el-note">${voidHits}</p>
+
+    <h4 class="yong-head">${term("십이신살", "sinsal")} · ${tr("Twelve Stars", "십이신살")} <span class="provisional-tag">${tr(
+      "from 연지",
+      "연지 기준",
+    )}</span></h4>
+    <div class="rel-list">${twelveRows}</div>
+
+    <h4 class="yong-head">${tr("Special stars", "특수 신살")}</h4>
+    ${specialBlock}
+
+    <h4 class="yong-head">${term("삼합", "samhap")} / ${term("방합", "banghap")} · ${tr("Branch Combinations", "지지 결합")}</h4>
+    ${comboBlock}
+
+    <h4 class="yong-head">${term("충", "chung")} · ${tr("Clashes", "충")}</h4>
+    ${clashBlock}
+  </section>`;
+}
+
 function renderWarnings(r: SajuResult): string {
   if (r.warnings.length === 0) return "";
   const items = r.warnings.map((w) => `<li>${esc(w)}</li>`).join("");
@@ -579,6 +741,7 @@ function render(r: SajuResult) {
     renderTST(r) +
     renderElements(r) +
     renderStrength(r) +
+    renderRelations(r) +
     renderDaeun(r);
   out.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }

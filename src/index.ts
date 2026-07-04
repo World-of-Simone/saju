@@ -31,6 +31,7 @@ import {
   type StrengthResult,
   type JohuSeason,
 } from "./strength.js";
+import { computeRelations, type RelationsResult } from "./relations.js";
 import type { Stem } from "./constants.js";
 
 export * from "./constants.js";
@@ -41,6 +42,7 @@ export type { FourPillars, Pillar } from "./pillars.js";
 export type { TenGodsResult, ElementBalance } from "./analysis.js";
 export type { DaeunResult, DaeunDirection } from "./daeun.js";
 export type { StrengthResult, JohuSeason } from "./strength.js";
+export * from "./relations.js";
 
 export interface SajuInput extends SajuClockInput {
   /**
@@ -96,6 +98,12 @@ export interface SajuResult {
    * 용신: the useful god is never a calculator output (spec §6).
    */
   johuSeason: JohuSeason;
+  /**
+   * 공망 (void), 신살 (the reliable spirit stars only), and 삼합/방합/충 (branch relations) —
+   * required by the reading spec's "compute the whole chart first" rule. These are FACTS the
+   * reading locates and interprets; the engine never reads them.
+   */
+  relations: RelationsResult;
   daeun?: { forward?: DaeunResult; reverse?: DaeunResult; inclusivityNote?: string };
   warnings: string[];
 }
@@ -141,6 +149,7 @@ export function computeSaju(input: SajuInput): SajuResult {
   const elements = computeElementBalance(pillars);
   const strength = computeStrength(pillars, dayMaster, elements);
   const johuSeason = computeJohuSeason(pillars.month.branch.index);
+  const relations = computeRelations(pillars);
 
   let daeun: SajuResult["daeun"];
   if (input.daeun) {
@@ -165,5 +174,5 @@ export function computeSaju(input: SajuInput): SajuResult {
     }
   }
 
-  return { input, trueSolarTime, pillars, dayMaster, tenGods, elements, strength, johuSeason, daeun, warnings };
+  return { input, trueSolarTime, pillars, dayMaster, tenGods, elements, strength, johuSeason, relations, daeun, warnings };
 }

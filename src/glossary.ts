@@ -156,4 +156,44 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
     explain:
       "A separate way to pick a 용신, by temperature: a chart that runs hot (Fire-heavy / summer) wants Water to cool it; one that runs cold (Water-heavy / winter) wants Fire to warm it. It can disagree with the 억부 candidate — that tension is meaningful, not an error.",
   },
+  gongmang: {
+    term: "gongmang",
+    hangul: "공망",
+    hanja: "空亡",
+    en: "Void / Emptiness",
+    explain:
+      "Two 'empty' branches determined by your Day Pillar's ten-day cycle (旬). Wherever one lands in your chart, that palace is read as hollow — present in form but thin in substance, so its themes feel unsettled or need to be earned rather than assumed.",
+  },
+  sinsal: {
+    term: "sinsal",
+    hangul: "신살",
+    hanja: "神殺",
+    en: "Spirit Stars",
+    explain:
+      "Named markers layered onto the chart. This calculator shows only the reliable ones — the twelve 십이신살 (read from your year branch) plus 효신살, 괴강, and 양인 — and deliberately omits the many decorative 'label' stars whose meaning is thin or contested.",
+  },
+  samhap: {
+    term: "samhap",
+    hangul: "삼합",
+    hanja: "三合",
+    en: "Three-Harmony",
+    explain:
+      "Three branches that lock together into a single element frame (e.g. 申子辰 → Water). A full set makes that element read as strong regardless of its raw headcount; a 반합 (half, the peak plus one) is a real but weaker pull.",
+  },
+  banghap: {
+    term: "banghap",
+    hangul: "방합",
+    hanja: "方合",
+    en: "Directional Union",
+    explain:
+      "Three branches of the same season/direction joining as one element (e.g. 巳午未 → Fire, summer/south). Like 삼합 it concentrates an element, but through seasonal kinship rather than the harmony triangle.",
+  },
+  chung: {
+    term: "chung",
+    hangul: "충",
+    hanja: "沖",
+    en: "Clash",
+    explain:
+      "Two directly opposing branches (six apart, e.g. 子午) meeting in the chart. A clash is friction between the two palaces involved — movement, disruption, or a push-pull to be read, not automatically 'bad'.",
+  },
 };

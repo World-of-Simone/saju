@@ -78,21 +78,21 @@ const STATIC: Record<Lang, Record<string, string>> = {
     form_title: "출생 정보",
     f_date: "생년월일",
     f_time: "태어난 시각",
-    f_time_hint: "가능한 한 정확하게 입력하세요.",
+    f_time_hint: "아는 만큼 정확하게 입력하세요.",
     f_time_unknown: "시간 모름",
     f_unknown_hint:
-      "태어난 시각이 없어도 사주의 대부분을 세울 수 있지만, 태어난 시(時)에서 나오는 부분은 세울 수 없습니다.",
+      "태어난 시각을 몰라도 사주의 대부분은 세울 수 있습니다. 다만 태어난 시(時)에서 나오는 부분, 곧 시주만은 알 수 없습니다.",
     f_gender:
-      '성별 <span class="legend-ko">— 대운(운의 기둥)의 방향을 정하기 위함</span>',
+      '성별 <span class="legend-ko">— 대운(운의 기둥)의 방향을 정하는 데 필요합니다</span>',
     f_gender_hint:
-      '당신의 <span class="term" data-term="daeun">대운</span>은 태어난 해의 음양과 성별로부터 고전 체계가 이끌어내는 방향으로 흐르며, 전통은 두 가지만을 인정합니다. 가장 자신과 가깝다고 느끼는 것을 고르거나, 각각을 시도해 비교해 보세요.',
+      '<span class="term" data-term="daeun">대운</span>은 태어난 해의 음양과 성별에 따라 고전 체계가 정하는 방향으로 흐릅니다. 전통에서는 성별을 둘로만 나눕니다. 가장 자신과 가깝게 느껴지는 쪽을 고르거나, 둘 다 계산해 비교해 보셔도 됩니다.',
     f_female: "여성",
     f_male: "남성",
     f_philosophy:
-      "사주는 해석의 예술이자 삶을 성찰하는 방법이며, 결정론적 예언이나 당신이 누구인지에 대한 고정된 판결이 아닙니다.",
+      "사주는 삶을 돌아보게 하는 해석의 예술입니다. 앞날을 단정하는 예언도, 당신이 어떤 사람인지 못박는 판결도 아닙니다.",
     f_submit: "내 사주 뽑기",
     footer_credit:
-      "이 도구는 시몬 그레이스 설이 시어머니 김희경 선생님의 감수를 받아 만들었습니다. 김 선생님은 30년 경력의 사주 명리 실천가로, 다섯 가지 고전 분야에서 자격을 갖추었으며, 한국 명리학 학회의 중앙 학술 위원으로 위촉되셨습니다. 여기서 얻은 것이 당신이 자신을 알고, 잘 살아가며, 세상에 선을 행하는 데 도움이 되기를 저희 가족은 바랍니다.",
+      "이 도구는 시몬 그레이스 설이 시어머니 김희경 선생님의 감수를 받아 만들었습니다. 김 선생님은 30년 경력의 사주 명리 전문가로, 다섯 가지 고전 분야의 자격을 갖추셨으며, 한국 명리학 학회의 중앙 학술 위원으로 위촉되셨습니다. 이곳에서 만난 것이 스스로를 알고, 잘 살아가며, 세상에 선을 더하는 데 보탬이 되기를 저희 가족은 바랍니다.",
     footer_geonames:
       '도시 데이터 © <a href="https://www.geonames.org/" target="_blank" rel="noopener noreferrer">GeoNames</a>, CC BY 4.0 라이선스.',
   },
@@ -122,7 +122,14 @@ function showTip(target: HTMLElement) {
   const key = target.dataset.term!;
   const g = GLOSSARY[key];
   if (!g) return;
-  tooltip.innerHTML = `<div class="tt-title">${esc(g.en)}<span class="tt-ko">${esc(g.hangul)} ${esc(g.hanja)}</span></div>${esc(g.explain)}`;
+  // Korean mode: hangul is the headword (hanja small), body is the Korean explanation.
+  // English mode: the English name leads, hangul+hanja sit alongside it.
+  const title =
+    lang === "ko"
+      ? `${esc(g.hangul)}<span class="tt-ko">${esc(g.hanja)}</span>`
+      : `${esc(g.en)}<span class="tt-ko">${esc(g.hangul)} ${esc(g.hanja)}</span>`;
+  const body = lang === "ko" ? g.explainKo : g.explain;
+  tooltip.innerHTML = `<div class="tt-title">${title}</div>${esc(body)}`;
   tooltip.hidden = false;
   const r = target.getBoundingClientRect();
   const tr = tooltip.getBoundingClientRect();
@@ -220,11 +227,11 @@ function buildChartText(r: SajuResult): string {
         "Please read it as an interpretive art: a lens for self-reflection and contemplation, not a fixed " +
         "prediction or a verdict about who I am. Walk me through what stands out and what it might mean, and " +
         "keep the framing exploratory. Feel free to ask me questions back.",
-      "아래는 제 사주(四柱) 명식입니다. 한국 선생님의 방식을 따릅니다: 기둥은 기록된 시계 시각을 있는 그대로 " +
-        "읽으며 — 시간대·일광절약·진태양시 보정을 적용하지 않습니다 — 해의 경계는 입춘, 달의 경계는 12절기(분 단위까지 계산), " +
-        "날의 경계는 23시로 삼습니다. " +
-        "이것을 결정된 예언이나 저에 대한 판결이 아니라, 성찰과 관조를 위한 해석의 예술로 읽어 주세요. " +
-        "무엇이 두드러지고 그것이 무엇을 뜻할 수 있는지 탐구적인 태도로 짚어 주시고, 저에게 되물어 주셔도 좋습니다.",
+      "아래는 제 사주(四柱) 명식입니다. 한국의 한 선생님 방식을 따릅니다. 기둥은 기록된 시계 시각을 있는 그대로 " +
+        "읽고 — 시간대·일광절약·진태양시 보정을 적용하지 않습니다 — 해의 경계는 입춘, 달의 경계는 12절기(분 단위까지 계산), " +
+        "날의 경계는 밤 11시로 삼습니다. " +
+        "이것을 앞날을 단정하는 예언이나 저를 규정하는 판결이 아니라, 성찰과 관조를 위한 해석의 예술로 읽어 주세요. " +
+        "무엇이 두드러지고 그것이 무엇을 뜻할 수 있는지 탐구하듯 짚어 주시고, 저에게 되물어 주셔도 좋습니다.",
     ),
   );
   L.push("");
@@ -234,7 +241,7 @@ function buildChartText(r: SajuResult): string {
   L.push(
     `${tr("Time", "시각")}: ${timeStr}${known ? tr(" (recorded clock time, used as-is)", " (기록된 시계 시각, 그대로 사용)") : tr(" (Hour Pillar omitted)", " (시주 생략)")}`,
   );
-  if (sex) L.push(`${tr("Gender used for luck-pillar direction (classical binary rule)", "대운 방향에 사용된 성별 (고전 이분법)")}: ${tr(sex, sex === "male" ? "남성" : "여성")}`);
+  if (sex) L.push(`${tr("Gender used for luck-pillar direction (classical binary rule)", "대운 방향 결정에 쓴 성별 (전통의 남녀 구분)")}: ${tr(sex, sex === "male" ? "남성" : "여성")}`);
   L.push("");
 
   L.push(tr("── FOUR PILLARS (사주 / 八字) ──", "── 사주 (四柱 / 八字) ──"));
@@ -260,14 +267,14 @@ function buildChartText(r: SajuResult): string {
   L.push(
     tr(
       "The count is the VISIBLE eight characters only (stems + branch elements); hidden stems are deliberately excluded from it.",
-      "집계는 드러난 여덟 글자(천간 + 지지 오행)만을 셉니다; 지장간은 집계에서 의도적으로 제외합니다.",
+      "드러난 여덟 글자(천간 + 지지 오행)만 셉니다. 지장간은 일부러 넣지 않습니다.",
     ),
   );
-  L.push(tr("Count (8 characters): ", "집계 (8글자): ") + order.map((m) => `${elName(m)} ${e.visible[m]}`).join(" · "));
+  L.push(tr("Count (8 characters): ", "여덟 글자 집계: ") + order.map((m) => `${elName(m)} ${e.visible[m]}`).join(" · "));
   L.push(`${tr("Strongest", "가장 강함")}: ${elName(e.strongest)} · ${tr("Weakest", "가장 약함")}: ${elName(e.weakest)}`);
   L.push(
     e.missing.length
-      ? `${tr("Missing (absent from the eight characters)", "없음 (여덟 글자에 나타나지 않음)")}: ${e.missing.map((m) => elName(m)).join(", ")}${tr(" — often the most telling part of a reading.", " — 종종 풀이에서 가장 많은 것을 말해 줍니다.")}`
+      ? `${tr("Missing (absent from the eight characters)", "없음 (여덟 글자에 드러나지 않음)")}: ${e.missing.map((m) => elName(m)).join(", ")}${tr(" — often the most telling part of a reading.", " — 오히려 이 빠진 오행이 가장 많은 것을 말해 주기도 합니다.")}`
       : tr("All five elements are represented.", "다섯 오행이 모두 나타납니다."),
   );
   L.push("");
@@ -292,7 +299,7 @@ function buildChartText(r: SajuResult): string {
   L.push(
     tr(
       "A labeled, OVERRIDABLE default read from the month branch. This is NOT a 용신 — the useful god is interpretive, school-dependent, and deliberately not emitted by the calculator.",
-      "월지에서 읽어낸, 덮어쓸 수 있는 기본값입니다. 이것은 용신이 아닙니다 — 용신은 해석적이고 유파에 따라 달라 계산기가 내지 않습니다.",
+      "월지에서 읽어낸 기본값으로, 얼마든지 바꿔도 됩니다. 이것은 용신이 아닙니다 — 용신은 해석의 영역이자 유파마다 달라 계산기가 정하지 않습니다.",
     ),
   );
   L.push(
@@ -306,7 +313,7 @@ function buildChartText(r: SajuResult): string {
   L.push(
     tr(
       "These are chart FACTS for the reading to locate and interpret; the engine draws no conclusions from them. Only reliable stars are listed (the twelve 십이신살 + 효신살/괴강/양인); decorative label-stars are omitted.",
-      "이것들은 풀이가 찾아 해석할 명식의 사실입니다; 엔진은 결론을 내지 않습니다. 믿을 만한 신살만 나열합니다 (십이신살 + 효신살/괴강/양인); 장식적 이름살은 제외합니다.",
+      "이것들은 풀이가 찾아 읽어낼 사주의 사실입니다. 엔진은 여기서 결론을 내지 않습니다. 믿을 만한 신살만 적습니다 (십이신살 + 효신살·괴강·양인). 뜻이 얕은 이름살은 뺐습니다.",
     ),
   );
   // 공망
@@ -315,7 +322,7 @@ function buildChartText(r: SajuResult): string {
       (rel.void.hits.length
         ? tr(
             ` — lands on the ${rel.void.hits.map((h) => POS_LABEL.en[h.pos]).join(", ")} palace(s); read that palace as hollow.`,
-            ` — ${rel.void.hits.map((h) => POS_LABEL.ko[h.pos]).join(", ")} 자리에 놓임; 그 자리는 비어 있음으로 읽습니다.`,
+            ` — ${rel.void.hits.map((h) => POS_LABEL.ko[h.pos]).join(", ")} 자리에 놓임. 그 자리는 비어 있다고 읽습니다.`,
           )
         : tr(" — not sitting on any of the four palaces.", " — 네 기둥 어디에도 놓이지 않음.")),
   );
@@ -353,7 +360,7 @@ function buildChartText(r: SajuResult): string {
     L.push(
       tr(
         "Ten-year seasons that layer over the natal chart; start age comes from birth's distance to the neighboring solar terms.",
-        "원국 위에 겹쳐지는 10년 단위의 계절; 시작 나이는 출생과 이웃 절기 사이의 거리에서 나옵니다.",
+        "원국 위에 겹쳐지는 10년 단위의 흐름입니다. 시작 나이는 출생과 이웃한 절기 사이의 거리에서 나옵니다.",
       ),
     );
     if (r.daeun.forward) L.push(daeunText(r.daeun.forward));
@@ -371,7 +378,7 @@ function buildChartText(r: SajuResult): string {
     tr(
       "Reminder for interpretation: Saju is a contemplative, interpretive tradition — please explore " +
         "possibilities and meaning rather than issuing deterministic predictions.",
-      "해석에 대한 당부: 사주는 관조적이고 해석적인 전통입니다 — 결정론적 예언을 내리기보다 가능성과 의미를 탐구해 주세요.",
+      "해석에 대한 당부: 사주는 관조하고 해석하는 전통입니다. 앞날을 단정하기보다 가능성과 의미를 함께 탐구해 주세요.",
     ),
   );
 
@@ -489,7 +496,7 @@ function renderPillars(r: SajuResult): string {
     <div class="pillars">${hourCard}${dayCard}${monthCard}${yearCard}</div>
     <p class="el-note">${tr(
       `Read right→left (Year → Hour). The highlighted <b>Day Master</b> (${term("일간", "ilgan")}) is “you”; every ${term("Ten God", "sipseong")} label describes how that character relates to you.`,
-      `우→좌로 읽습니다 (연 → 시). 강조된 <b>일간</b>(${term("일간", "ilgan")})이 '나'이며, 모든 ${term("십성", "sipseong")} 표시는 그 글자가 나와 어떤 관계인지 나타냅니다.`,
+      `오른쪽에서 왼쪽으로 읽습니다 (연 → 시). 강조된 <b>${term("일간", "ilgan")}</b>이 곧 '나'이고, 모든 ${term("십성", "sipseong")} 표시는 그 글자가 나와 맺는 관계를 나타냅니다.`,
     )}</p>
   </section>`;
 }
@@ -535,7 +542,7 @@ function renderElements(r: SajuResult): string {
     e.missing.length > 0
       ? `<p class="el-note">${tr(
           `Missing (not visible in the eight characters): <b>${e.missing.map((m) => elName(m)).join(", ")}</b>. A missing element is often the most telling part of a reading.`,
-          `없음 (여덟 글자에 보이지 않음): <b>${e.missing.map((m) => elName(m)).join(", ")}</b>. 빠진 오행은 종종 풀이에서 가장 많은 것을 말해 줍니다.`,
+          `없음 (여덟 글자에 드러나지 않음): <b>${e.missing.map((m) => elName(m)).join(", ")}</b>. 오히려 빠진 오행이 풀이에서 가장 많은 것을 말해 주기도 합니다.`,
         )}</p>`
       : `<p class="el-note">${tr("All five elements are represented.", "다섯 오행이 모두 나타납니다.")}</p>`;
   return `<section class="card result-section">
@@ -543,7 +550,7 @@ function renderElements(r: SajuResult): string {
     <div class="el-bars">${bars}</div>
     <p class="el-note">${tr(
       `The count is the <b>visible eight characters</b> only — ${term("hidden stems", "jijanggan")} are deliberately left out of it. Strongest: <b class="${elClass(e.strongest)}">${elName(e.strongest)}</b> · Weakest: <b class="${elClass(e.weakest)}">${elName(e.weakest)}</b>.`,
-      `집계는 <b>드러난 여덟 글자</b>만 셉니다 — ${term("지장간", "jijanggan")}은 집계에서 의도적으로 제외합니다. 가장 강함: <b class="${elClass(e.strongest)}">${elName(e.strongest)}</b> · 가장 약함: <b class="${elClass(e.weakest)}">${elName(e.weakest)}</b>.`,
+      `<b>드러난 여덟 글자</b>만 셉니다 — ${term("지장간", "jijanggan")}은 일부러 넣지 않습니다. 가장 강한 오행: <b class="${elClass(e.strongest)}">${elName(e.strongest)}</b> · 가장 약한 오행: <b class="${elClass(e.weakest)}">${elName(e.weakest)}</b>.`,
     )}</p>
     ${missing}
   </section>`;
@@ -574,7 +581,7 @@ function renderStrength(r: SajuResult): string {
     <h4 class="yong-head">${term("조후", "johu")} · ${tr("Climate Season", "조후 계절")} <span class="provisional-tag">${tr("default", "기본값")}</span></h4>
     <p class="el-note">${tr(
       `A labeled, overridable default read from the ${term("월지", "deukryeong")} (month branch). This is <b>not a ${term("용신", "yongsin")}</b> — the useful god is interpretive and school-dependent, and the calculator deliberately does not emit one.`,
-      `${term("월지", "deukryeong")}에서 읽어낸, 덮어쓸 수 있는 기본값입니다. 이것은 <b>${term("용신", "yongsin")}이 아닙니다</b> — 용신은 해석적이고 유파에 따라 달라 계산기가 내지 않습니다.`,
+      `${term("월지", "deukryeong")}에서 읽어낸 기본값으로, 얼마든지 바꿔도 됩니다. 이것은 <b>${term("용신", "yongsin")}이 아닙니다</b> — 용신은 해석의 영역이자 유파마다 달라 계산기가 정하지 않습니다.`,
     )}</p>
     <p class="strength-verdict">${tr("Season", "계절")}: <b>${tr(j.en, j.hangul)}</b> <span class="el-note" style="font-weight:400">(${j.hangul}/${j.hanja} — ${tr("from the", "월지")} <b>${j.monthBranchHanja}</b> ${tr("month branch", "기준")}${j.seasonOpener ? tr("; a 生地 opener read back one season as the climate lags the calendar", "; 生地 시작월 — 기후가 절기보다 늦어 한 계절 뒤로 읽음") : ""})</span></p>
   </section>`;
@@ -607,7 +614,7 @@ function renderDaeun(r: SajuResult): string {
     ${inner}
     <div class="inclusivity">${tr(
       `Each 10-year pillar layers over your natal chart. Yours run <b>${dir}</b> — a direction the classical system derives from your birth-year polarity together with the gender you chose; the start age comes from your birth's distance to the neighboring solar terms. This is one interpretive lens, not a fixed forecast — recompute with the other gender any time to compare.`,
-      `각 10년 기둥은 당신의 원국 위에 겹쳐집니다. 당신의 대운은 <b>${dir}</b>으로 흐릅니다 — 고전 체계가 태어난 해의 음양과 선택한 성별로부터 이끌어내는 방향이며, 시작 나이는 출생과 이웃 절기 사이의 거리에서 나옵니다. 이것은 하나의 해석적 렌즈일 뿐 고정된 예보가 아니며, 언제든 다른 성별로 다시 계산해 비교할 수 있습니다.`,
+      `각 10년 기둥은 원국 위에 겹쳐집니다. 대운은 <b>${dir}</b>으로 흐릅니다 — 고전 체계가 태어난 해의 음양과 선택한 성별에 따라 정하는 방향이며, 시작 나이는 출생과 이웃한 절기 사이의 거리에서 나옵니다. 이것은 하나의 관점일 뿐 정해진 예언이 아니니, 언제든 다른 성별로 다시 계산해 비교해 보셔도 됩니다.`,
     )}</div>
   </section>`;
 }
@@ -624,11 +631,11 @@ function renderRelations(r: SajuResult): string {
     v.hits.length > 0
       ? tr(
           `Falls on your <b>${v.hits.map((h) => posName(h.pos)).join(", ")}</b> palace — that palace is read as “hollow”: present in form but thin in substance.`,
-          `당신의 <b>${v.hits.map((h) => posName(h.pos)).join(", ")}</b> 자리에 놓입니다 — 그 자리는 '비어 있음'으로 읽습니다: 형태는 있으나 알맹이가 얕습니다.`,
+          `<b>${v.hits.map((h) => posName(h.pos)).join(", ")}</b> 자리에 놓입니다 — 그 자리는 비어 있다고 읽습니다. 틀은 있으나 알맹이가 얕습니다.`,
         )
       : tr(
           "Neither void branch sits on one of your four palaces, so 공망 is quiet in this chart.",
-          "두 공망 지지 모두 네 기둥에 놓이지 않아, 이 명식에서 공망은 조용합니다.",
+          "두 공망 지지 모두 네 기둥에 놓이지 않아, 이 사주에서 공망은 잠잠합니다.",
         );
 
   // ── 십이신살 (twelve stars, per palace) ──
@@ -698,7 +705,7 @@ function renderRelations(r: SajuResult): string {
     )}</span></h3>
     <p class="el-note">${tr(
       `These are <b>facts the reading locates and interprets</b> — the calculator surfaces them but never draws conclusions from them. Only the reliable stars are shown (the twelve ${term("십이신살", "sinsal")} plus ${term("효신살", "sinsal")} / ${term("괴강", "sinsal")} / ${term("양인", "sinsal")}); decorative label-stars are deliberately left out.`,
-      `이것들은 <b>풀이가 찾아 해석하는 사실</b>입니다 — 계산기는 드러낼 뿐 결론을 내리지 않습니다. 믿을 만한 신살만 표시합니다 (${term("십이신살", "sinsal")}과 ${term("효신살", "sinsal")}/${term("괴강", "sinsal")}/${term("양인", "sinsal")}); 장식적 이름살은 의도적으로 제외합니다.`,
+      `이것들은 <b>풀이가 찾아 읽어내는 사실</b>입니다 — 계산기는 드러낼 뿐 결론을 내리지 않습니다. 믿을 만한 신살만 보여 드립니다 (${term("십이신살", "sinsal")}과 ${term("효신살", "sinsal")}·${term("괴강", "sinsal")}·${term("양인", "sinsal")}). 뜻이 얕은 이름살은 일부러 뺐습니다.`,
     )}</p>
 
     <h4 class="yong-head">${term("공망", "gongmang")} · ${tr("Void", "공망")}</h4>

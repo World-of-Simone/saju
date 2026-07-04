@@ -79,10 +79,18 @@ export function computeTenGods(pillars: FourPillars): TenGodsResult {
 }
 
 export interface ElementBalance {
-  /** Count across the visible 8 characters (stems + branch primary elements). */
+  /**
+   * THE five-element count — visible 8 characters only (stems + branch primary elements).
+   * Hidden stems are deliberately EXCLUDED (spec §5): the count answers "how many," never
+   * "how strong," and hidden stems stay out of it. strongest/weakest/missing all key off this.
+   */
   visible: Record<Element, number>;
-  /** Weighted count including all hidden stems (지장간) in branches. */
+  /**
+   * A hidden-stem-inclusive tally used only as an INGREDIENT for the 득세 (allies) strength
+   * signal. NOT the count, and never presented as the count — see `visible`.
+   */
   weighted: Record<Element, number>;
+  /** Strongest/weakest by the VISIBLE count (ties resolve in wood→fire→earth→metal→water order). */
   strongest: Element;
   weakest: Element;
   /** Elements with a zero visible count — often the most telling in a reading. */
@@ -102,15 +110,16 @@ export function computeElementBalance(pillars: FourPillars): ElementBalance {
     visible[p.stem.element] += 1;
     visible[p.branch.element] += 1;
     weighted[p.stem.element] += 1;
-    // Hidden stems contribute to the weighted tally.
+    // Hidden stems contribute to the weighted (strength-ingredient) tally only.
     for (const si of p.branch.hiddenStems) {
       weighted[STEMS[si]!.element] += 1;
     }
   }
 
+  // The count is the visible eight — strongest/weakest are read from it, not the weighted tally.
   const elements = Object.keys(visible) as Element[];
-  const strongest = elements.reduce((a, b) => (weighted[b] > weighted[a] ? b : a));
-  const weakest = elements.reduce((a, b) => (weighted[b] < weighted[a] ? b : a));
+  const strongest = elements.reduce((a, b) => (visible[b] > visible[a] ? b : a));
+  const weakest = elements.reduce((a, b) => (visible[b] < visible[a] ? b : a));
   const missing = elements.filter((e) => visible[e] === 0);
 
   return { visible, weighted, strongest, weakest, missing };

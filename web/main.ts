@@ -304,7 +304,6 @@ function buildChartText(r: SajuResult, place: string): string {
   const known = inp.hasBirthTime !== false;
   const timeStr = known ? `${pad2(inp.hour)}:${pad2(inp.minute)}` : tr("unknown", "모름");
   const sex = inp.daeun?.fromConvention?.sex;
-  const els = (arr: Element[]) => arr.map((m) => elName(m)).join(", ");
 
   const L: string[] = [];
   L.push(tr("KOREAN SAJU (사주 · Four Pillars) CHART", "사주 (四柱) 명식"));
@@ -358,10 +357,12 @@ function buildChartText(r: SajuResult, place: string): string {
 
   L.push(tr("── FIVE ELEMENTS (오행) ──", "── 오행 (五行) ──"));
   L.push(
-    tr("Weighted (includes hidden stems): ", "가중 (지장간 포함): ") +
-      order.map((m) => `${elName(m)} ${e.weighted[m]}`).join(" · "),
+    tr(
+      "The count is the VISIBLE eight characters only (stems + branch elements); hidden stems are deliberately excluded from it.",
+      "집계는 드러난 여덟 글자(천간 + 지지 오행)만을 셉니다; 지장간은 집계에서 의도적으로 제외합니다.",
+    ),
   );
-  L.push(tr("Visible (8 characters):        ", "드러난 8글자:        ") + order.map((m) => `${elName(m)} ${e.visible[m]}`).join(" · "));
+  L.push(tr("Count (8 characters): ", "집계 (8글자): ") + order.map((m) => `${elName(m)} ${e.visible[m]}`).join(" · "));
   L.push(`${tr("Strongest", "가장 강함")}: ${elName(e.strongest)} · ${tr("Weakest", "가장 약함")}: ${elName(e.weakest)}`);
   L.push(
     e.missing.length
@@ -371,39 +372,32 @@ function buildChartText(r: SajuResult, place: string): string {
   L.push("");
 
   const st = r.strength;
-  L.push(tr("── DAY MASTER STRENGTH (신강약) ──", "── 신강약 (身强弱) ──"));
-  L.push(tr("Deterministic: three classical tests, then a verdict.", "결정론적: 세 가지 고전 판정 후 결론."));
-  L.push(`${tr("Verdict", "결론")}: ${st.verdict}${st.borderline ? tr(" (borderline / mixed — weigh by hand)", " (경계 / 혼합 — 직접 저울질 필요)") : ""}`);
-  L.push(`${tr("Month phase", "월령 왕상휴수사")} (旺相休囚死): ${st.phase.hangul} ${st.phase.hanja} — ${tr(st.phase.en, st.phase.hangul)}`);
-  L.push(`  득령 (${tr("month command", "월령")}): ${st.hasMonthCommand ? tr("yes", "예") : tr("no", "아니오")}`);
-  L.push(`  득지 (${tr("rootedness/통근", "통근")}): ${st.hasRoot ? tr("yes", "예") : tr("no", "아니오")} — ${st.strongRoots} ${tr("strong root(s)", "강한 뿌리")}, ${st.resourceRoots} ${tr("resource root(s)", "인성 뿌리")}`);
-  L.push(`  득세 (${tr("allies", "세력")}): ${st.hasAllies ? tr("yes", "예") : tr("no", "아니오")} — ${tr("support", "생조")} ${st.supportCount} vs ${tr("drain", "설기")} ${st.drainCount}`);
-  L.push("");
-
-  const y = r.yongsin;
-  L.push(tr("── USEFUL GOD CANDIDATES (용신 · PROVISIONAL) ──", "── 용신 후보 (用神 · 잠정) ──"));
+  L.push(tr("── DAY MASTER STRENGTH INGREDIENTS (신강약 근거) ──", "── 신강약 근거 (身强弱) ──"));
   L.push(
     tr(
-      "Interpretive and school-dependent — these are CANDIDATES to start a human reading, not a verdict.",
-      "해석적이며 유파에 따라 다릅니다 — 이는 사람이 하는 풀이의 출발점이 되는 후보이지 결론이 아닙니다.",
+      "The 신강/신약 VERDICT is left to the reading (weigh these in order: 월지 command → 인성 resource → 비겁 companion). The engine reports only the ingredients.",
+      "신강/신약 결론은 풀이의 몫입니다 (월지 → 인성 → 비겁 순으로 저울질). 엔진은 근거만 제시합니다.",
     ),
   );
-  L.push(`${tr("억부 (support/suppress) candidate — favorable", "억부(抑扶) 후보 — 유리")}: ${els(y.eokbu.usefulElements)}; ${tr("unfavorable", "불리")}: ${els(y.eokbu.avoidElements)}`);
-  L.push(`  ${y.eokbu.rationale}`);
+  L.push(`${tr("Month phase", "월령 왕상휴수사")} (旺相休囚死): ${st.phase.hangul} ${st.phase.hanja} — ${tr(st.phase.en, st.phase.hangul)}`);
+  L.push(`  득령 (${tr("month command", "월령")}): ${st.hasMonthCommand ? tr("yes", "예") : tr("no", "아니오")}`);
+  L.push(`  득지 (${tr("rootedness/통근", "통근")}): ${st.hasRoot ? tr("yes", "예") : tr("no", "아니오")} — ${st.strongRoots} ${tr("strong root(s)", "강한 뿌리")}, ${st.resourceRoots} ${tr("resource root(s)", "인성 뿌리")}; ${tr("rooted in month branch", "월지 통근")}: ${st.rootedInMonthBranch ? tr("yes", "예") : tr("no", "아니오")}`);
+  L.push(`  득세 (${tr("allies", "세력")}): ${st.hasAllies ? tr("yes", "예") : tr("no", "아니오")} — ${tr("support", "생조")} ${st.supportCount} vs ${tr("drain", "설기")} ${st.drainCount}`);
+  L.push(`  ${tr("인성 (resource) present", "인성 존재")}: ${st.resourcePresent ? tr("yes", "예") : tr("no", "아니오")} · ${tr("비겁 (companion) present", "비겁 존재")}: ${st.companionPresent ? tr("yes", "예") : tr("no", "아니오")}`);
+  L.push("");
+
+  const j = r.johuSeason;
+  L.push(tr("── CLIMATE SEASON (조후) ──", "── 조후 (調候) ──"));
   L.push(
-    y.johu.tension
-      ? `${tr("조후 (climate) candidate — chart runs", "조후(調候) 후보 — 명식이")} ${tr(y.johu.climate, y.johu.climate === "hot" ? "더움" : "추움")}; ${tr("wants", "필요")}: ${y.johu.candidateElement ? elName(y.johu.candidateElement) : "—"}`
-      : tr("조후 (climate) candidate — climate looks balanced; no forced candidate.", "조후(調候) 후보 — 한난이 균형 잡혀 있어 강제 후보 없음."),
+    tr(
+      "A labeled, OVERRIDABLE default read from the month branch. This is NOT a 용신 — the useful god is interpretive, school-dependent, and deliberately not emitted by the calculator.",
+      "월지에서 읽어낸, 덮어쓸 수 있는 기본값입니다. 이것은 용신이 아닙니다 — 용신은 해석적이고 유파에 따라 달라 계산기가 내지 않습니다.",
+    ),
   );
-  L.push(`  ${y.johu.rationale}`);
-  if (y.diverges) {
-    L.push(
-      tr(
-        "⚠ The 억부 and 조후 candidates DIVERGE. This tension is intentional — a practitioner weighs the whole chart rather than picking one automatically.",
-        "⚠ 억부와 조후 후보가 서로 다릅니다. 이 긴장은 의도된 것으로, 실천가는 하나를 자동으로 고르기보다 명식 전체를 저울질합니다.",
-      ),
-    );
-  }
+  L.push(
+    `${tr("Season", "계절")}: ${tr(j.en, j.hangul)} (${j.hangul}/${j.hanja}) — ${tr("from the", "월지")} ${j.monthBranchHanja} ${tr("month branch", "기준")}` +
+      (j.seasonOpener ? tr(" (a 生地 season-opener, read back one season as the climate lags)", " (生地 절기 시작월 — 기후 지연으로 한 계절 뒤로 읽음)") : ""),
+  );
   L.push("");
 
   if (r.daeun && (r.daeun.forward || r.daeun.reverse)) {
@@ -577,15 +571,15 @@ function renderTST(r: SajuResult): string {
 function renderElements(r: SajuResult): string {
   const e = r.elements;
   const order: Element[] = ["wood", "fire", "earth", "metal", "water"];
-  const max = Math.max(...order.map((k) => e.weighted[k]), 1);
+  const max = Math.max(...order.map((k) => e.visible[k]), 1);
   const bars = order
     .map((k) => {
-      const w = e.weighted[k];
-      const pct = (w / max) * 100;
+      const v = e.visible[k];
+      const pct = (v / max) * 100;
       return `<div class="el-bar">
         <span><span class="dot bg-${k}"></span>${elName(k)}</span>
         <span class="track"><span class="fill bg-${k}" style="width:${pct}%"></span></span>
-        <span class="v ${elClass(k)}" style="text-align:right">${w}</span>
+        <span class="v ${elClass(k)}" style="text-align:right">${v}</span>
       </div>`;
     })
     .join("");
@@ -600,8 +594,8 @@ function renderElements(r: SajuResult): string {
     <h3><span class="h3-ko">${term("오행", "ohaeng")}</span><span class="h3-en">${tr("Five Elements · Ohaeng", "다섯 원소")}</span></h3>
     <div class="el-bars">${bars}</div>
     <p class="el-note">${tr(
-      `Weighted count includes ${term("hidden stems", "jijanggan")}. Strongest: <b class="${elClass(e.strongest)}">${elName(e.strongest)}</b> · Weakest: <b class="${elClass(e.weakest)}">${elName(e.weakest)}</b>.`,
-      `가중 집계는 ${term("지장간", "jijanggan")}을 포함합니다. 가장 강함: <b class="${elClass(e.strongest)}">${elName(e.strongest)}</b> · 가장 약함: <b class="${elClass(e.weakest)}">${elName(e.weakest)}</b>.`,
+      `The count is the <b>visible eight characters</b> only — ${term("hidden stems", "jijanggan")} are deliberately left out of it. Strongest: <b class="${elClass(e.strongest)}">${elName(e.strongest)}</b> · Weakest: <b class="${elClass(e.weakest)}">${elName(e.weakest)}</b>.`,
+      `집계는 <b>드러난 여덟 글자</b>만 셉니다 — ${term("지장간", "jijanggan")}은 집계에서 의도적으로 제외합니다. 가장 강함: <b class="${elClass(e.strongest)}">${elName(e.strongest)}</b> · 가장 약함: <b class="${elClass(e.weakest)}">${elName(e.weakest)}</b>.`,
     )}</p>
     ${missing}
   </section>`;
@@ -609,54 +603,32 @@ function renderElements(r: SajuResult): string {
 
 function renderStrength(r: SajuResult): string {
   const st = r.strength;
-  const y = r.yongsin;
+  const j = r.johuSeason;
   const chip = (ko: string, en: string, ok: boolean) =>
     `<span class="cond ${ok ? "cond-yes" : "cond-no"}">${ko} <small>${en}</small> ${ok ? "✓" : "✕"}</span>`;
-  const pill = (arr: Element[]) =>
-    arr.map((m) => `<span class="yong-el ${elClass(m)}">${elName(m)}</span>`).join(" ");
-  const climateWord = y.johu.climate === "hot" ? tr("hot", "더움") : tr("cold", "추움");
 
   return `<section class="card result-section">
-    <h3><span class="h3-ko">${term("신강약", "singangyak")}</span><span class="h3-en">${tr("Day Master Strength · Singangyak", "일간의 강약")}</span></h3>
-    <p class="strength-verdict">${tr("Verdict", "결론")}: <b class="${elClass(r.dayMaster.element)}">${st.verdict}</b>${st.borderline ? ` <span class="el-note" style="font-weight:400">${tr("(borderline — a genuinely mixed chart)", "(경계 — 진정으로 혼합된 명식)")}</span>` : ""}</p>
+    <h3><span class="h3-ko">${term("신강약", "singangyak")}</span><span class="h3-en">${tr("Strength Ingredients · Singangyak", "일간 강약의 근거")}</span></h3>
+    <p class="el-note">${tr(
+      `The <b>신강/신약 verdict is left to the reading</b>, not the calculator — weigh these ingredients in order: ${term("월지", "deukryeong")} command → ${term("인성", "sipseong")} resource → ${term("비겁", "sipseong")} companion. What the engine reports:`,
+      `<b>신강/신약 결론은 계산기가 아니라 풀이의 몫</b>입니다 — 근거를 ${term("월지", "deukryeong")} → ${term("인성", "sipseong")} → ${term("비겁", "sipseong")} 순으로 저울질하세요. 엔진이 제시하는 근거:`,
+    )}</p>
     <div class="cond-row">
       ${chip(term("득령", "deukryeong"), tr("month command", "월령"), st.hasMonthCommand)}
       ${chip(term("득지", "tongeun"), tr("rootedness", "통근"), st.hasRoot)}
       ${chip("득세", tr("allies", "세력"), st.hasAllies)}
     </div>
     <p class="el-note">${tr(
-      `Month phase ${term("旺相休囚死", "deukryeong")}: <b>${st.phase.hangul} ${st.phase.hanja}</b> — ${esc(st.phase.en)}. Roots: ${st.strongRoots} strong, ${st.resourceRoots} resource. Allies: support ${st.supportCount} vs drain ${st.drainCount}. This part is deterministic.`,
-      `월령 ${term("旺相休囚死", "deukryeong")}: <b>${st.phase.hangul} ${st.phase.hanja}</b>. 뿌리: 강근 ${st.strongRoots}, 인성근 ${st.resourceRoots}. 세력: 생조 ${st.supportCount} vs 설기 ${st.drainCount}. 이 부분은 결정론적입니다.`,
+      `Month phase ${term("旺相休囚死", "deukryeong")}: <b>${st.phase.hangul} ${st.phase.hanja}</b> — ${esc(st.phase.en)}. Rooted in the month branch: <b>${st.rootedInMonthBranch ? "yes" : "no"}</b> (${st.strongRoots} strong root(s), ${st.resourceRoots} resource root(s)). 인성 resource present: <b>${st.resourcePresent ? "yes" : "no"}</b> · 비겁 companion present: <b>${st.companionPresent ? "yes" : "no"}</b>. Allies: support ${st.supportCount} vs drain ${st.drainCount}.`,
+      `월령 ${term("旺相休囚死", "deukryeong")}: <b>${st.phase.hangul} ${st.phase.hanja}</b>. 월지 통근: <b>${st.rootedInMonthBranch ? "예" : "아니오"}</b> (강근 ${st.strongRoots}, 인성근 ${st.resourceRoots}). 인성 존재: <b>${st.resourcePresent ? "예" : "아니오"}</b> · 비겁 존재: <b>${st.companionPresent ? "예" : "아니오"}</b>. 세력: 생조 ${st.supportCount} vs 설기 ${st.drainCount}.`,
     )}</p>
 
-    <h4 class="yong-head">${term(tr("Useful God", "용신"), "yongsin")} ${tr("candidates", "후보")} <span class="provisional-tag">${tr("provisional", "잠정")}</span></h4>
+    <h4 class="yong-head">${term("조후", "johu")} · ${tr("Climate Season", "조후 계절")} <span class="provisional-tag">${tr("default", "기본값")}</span></h4>
     <p class="el-note">${tr(
-      `Choosing a ${term("용신", "yongsin")} is interpretive and school-dependent, so these are starting points — not a verdict.`,
-      `${term("용신", "yongsin")}을 정하는 일은 해석적이고 유파에 따라 달라, 이는 출발점일 뿐 결론이 아닙니다.`,
+      `A labeled, overridable default read from the ${term("월지", "deukryeong")} (month branch). This is <b>not a ${term("용신", "yongsin")}</b> — the useful god is interpretive and school-dependent, and the calculator deliberately does not emit one.`,
+      `${term("월지", "deukryeong")}에서 읽어낸, 덮어쓸 수 있는 기본값입니다. 이것은 <b>${term("용신", "yongsin")}이 아닙니다</b> — 용신은 해석적이고 유파에 따라 달라 계산기가 내지 않습니다.`,
     )}</p>
-    <div class="yong-grid">
-      <div class="yong-card">
-        <div class="yong-title">${term("억부", "eokbu")} · ${tr("support/suppress", "생조/억제")}</div>
-        <div class="yong-line">${tr("Favorable", "유리")}: ${pill(y.eokbu.usefulElements)}</div>
-        <div class="yong-line yong-avoid">${tr("Unfavorable", "불리")}: ${pill(y.eokbu.avoidElements)}</div>
-      </div>
-      <div class="yong-card">
-        <div class="yong-title">${term("조후", "johu")} · ${tr("climate", "한난")}</div>
-        ${
-          y.johu.tension && y.johu.candidateElement
-            ? `<div class="yong-line">${tr(`Runs <b>${climateWord}</b>; wants`, `<b>${climateWord}</b>; 필요`)} ${pill([y.johu.candidateElement])}</div>`
-            : `<div class="yong-line">${tr("Climate looks balanced — no forced candidate.", "한난이 균형 잡혀 있어 강제 후보 없음.")}</div>`
-        }
-      </div>
-    </div>
-    ${
-      y.diverges
-        ? `<p class="yong-diverge">${tr(
-            "⚠ The 억부 and 조후 candidates <b>diverge</b>. That tension is intentional — a practitioner weighs the whole chart rather than letting the calculator pick one.",
-            "⚠ 억부와 조후 후보가 <b>서로 다릅니다</b>. 이 긴장은 의도된 것으로, 실천가는 계산기가 하나를 고르게 두기보다 명식 전체를 저울질합니다.",
-          )}</p>`
-        : ""
-    }
+    <p class="strength-verdict">${tr("Season", "계절")}: <b>${tr(j.en, j.hangul)}</b> <span class="el-note" style="font-weight:400">(${j.hangul}/${j.hanja} — ${tr("from the", "월지")} <b>${j.monthBranchHanja}</b> ${tr("month branch", "기준")}${j.seasonOpener ? tr("; a 生地 opener read back one season as the climate lags the calendar", "; 生地 시작월 — 기후가 절기보다 늦어 한 계절 뒤로 읽음") : ""})</span></p>
   </section>`;
 }
 

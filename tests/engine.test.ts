@@ -10,7 +10,7 @@ import { tenGodOf, computeTenGods, computeElementBalance } from "../src/analysis
 import { STEMS, BRANCHES } from "../src/constants.js";
 import type { FourPillars } from "../src/pillars.js";
 import { directionFromConvention } from "../src/daeun.js";
-import { computeStrength, computeYongsin } from "../src/strength.js";
+import { computeStrength, computeJohuSeason } from "../src/strength.js";
 
 describe("true solar time — longitude & equation of time", () => {
   it("applies ~ -32 min longitude correction for Seoul (127°E vs 135° meridian)", () => {
@@ -168,10 +168,10 @@ describe("dae-un direction & inclusivity", () => {
   });
 });
 
-describe("신강약 (day-master strength) & 용신 candidates", () => {
+describe("신강약 ingredients & 조후 season (no verdict, no 용신)", () => {
   // Sanity chart from the feature spec: 丙寅 / 庚寅 / 庚子 / 丁亥. Day Master 庚 (Yang Metal)
-  // born in the 寅 (Wood) month — metal is 囚 (trapped), rootless, badly outnumbered.
-  // A correct engine MUST land on weak here.
+  // born in the 寅 (Wood) month — metal is 囚 (trapped), rootless, badly outnumbered. The engine
+  // surfaces these INGREDIENTS but leaves the 신강/신약 verdict to the reading (spec §6).
   const cell = (stemIdx: number, branchIdx: number) => ({
     ganzhiIndex: 0,
     stem: STEMS[stemIdx]!,
@@ -189,38 +189,52 @@ describe("신강약 (day-master strength) & 용신 candidates", () => {
   const elements = computeElementBalance(pillars);
   const strength = computeStrength(pillars, dm, elements);
 
-  it("weighted balance totals 13 with Fire strongest", () => {
+  it("counts the VISIBLE eight only; hidden stems stay out of the count", () => {
+    const v = elements.visible;
+    // 丙庚庚丁 stems + 寅寅子亥 branches: fire 2, metal 2, wood 2, water 2, earth 0.
+    expect(v.fire + v.wood + v.metal + v.water + v.earth).toBe(8);
+    expect(v).toEqual({ wood: 2, fire: 2, earth: 0, metal: 2, water: 2 });
+    // A 4-way tie resolves in wood→fire→earth→metal→water order → wood.
+    expect(elements.strongest).toBe("wood");
+    expect(elements.missing).toEqual(["earth"]);
+    // The weighted (hidden-stem-inclusive) tally is a separate strength ingredient, not the count.
     const w = elements.weighted;
     expect(w.wood + w.fire + w.earth + w.metal + w.water).toBe(13);
-    expect(elements.strongest).toBe("fire");
   });
 
-  it("scores the three classical conditions as all-weak", () => {
+  it("surfaces the three classical ingredients as all-weak — but no verdict field", () => {
     expect(strength.phase.hanja).toBe("囚"); // metal fighting a wood season
     expect(strength.hasMonthCommand).toBe(false); // 실령
+    expect(strength.rootedInMonthBranch).toBe(false); // no metal hidden in 寅
     expect(strength.strongRoots).toBe(0); // no metal hidden in any branch — rootless
     expect(strength.hasRoot).toBe(false); // 실지
+    expect(strength.resourcePresent).toBe(true); // earth (인성) hidden in 寅
+    expect(strength.companionPresent).toBe(true); // extra metal beyond the Day Master stem
     expect(strength.supportCount).toBe(3); // (metal 2 − 1) + earth 2
     expect(strength.drainCount).toBe(9); // water 2 + wood 3 + fire 4
     expect(strength.hasAllies).toBe(false); // 실세
     expect(strength.conditionsMet).toBe(0);
+    // The engine must NOT hand down a verdict.
+    expect("verdict" in strength).toBe(false);
   });
 
-  it("verdict is 신약 (weak) — the spec's hard sanity check", () => {
-    expect(strength.verdict).toBe("신약");
+  it("emits a 조후 season default from the month branch — never a 용신", () => {
+    const johu = computeJohuSeason(pillars.month.branch.index); // 寅 (index 2)
+    expect(johu.season).toBe("winter"); // 寅월: climate lags → deep-winter cold
+    expect(johu.monthBranchHanja).toBe("寅");
+    expect(johu.seasonOpener).toBe(true); // 寅 is a 生地 opener
+    expect(johu.firmest).toBe(true); // firmest for 寅월
+    expect(johu.default).toBe(true);
+    expect(johu.note).toMatch(/용신/); // states the useful god is not emitted
   });
 
-  it("offers divergent 용신 candidates instead of resolving the tension", () => {
-    const y = computeYongsin(strength, dm, elements, pillars.month.branch.index);
-    // 억부: weak DM → feed it (Earth = resource, Metal = companion).
-    expect(y.eokbu.provisional).toBe(true);
-    expect(new Set(y.eokbu.usefulElements)).toEqual(new Set(["earth", "metal"]));
-    // 조후: chart runs hot (Fire dominant) → wants Water.
-    expect(y.johu.climate).toBe("hot");
-    expect(y.johu.candidateElement).toBe("water");
-    // Water is in 억부's avoid set → the two lenses diverge, and we say so.
-    expect(y.diverges).toBe(true);
-    expect(y.note).toMatch(/never a settled answer/);
+  it("classifies the four season-openers back one season (climate lag)", () => {
+    expect(computeJohuSeason(2).season).toBe("winter"); // 寅 → winter
+    expect(computeJohuSeason(5).season).toBe("spring"); // 巳 → spring
+    expect(computeJohuSeason(8).season).toBe("summer"); // 申 → summer
+    expect(computeJohuSeason(11).season).toBe("autumn"); // 亥 → autumn
+    // A mid-season branch sits squarely in its season.
+    expect(computeJohuSeason(6).season).toBe("summer"); // 午 → summer
   });
 });
 

@@ -1,23 +1,22 @@
 /**
- * 신강약 (day-master strength) and 용신 (useful god) analysis.
+ * 신강약 (day-master strength) INGREDIENTS and the 조후 (climate) season default.
  *
- * Two very different epistemic statuses live in this file, and the output is designed to keep
- * them apart:
+ * Per spec §6, two calls are judgment, not computation, and the engine must NOT hand them down
+ * as verdicts:
  *
- *   • 신강약 (strength) is DETERMINISTIC. Given the pillars, the classical 득령/득지/득세
- *     (month-command / rootedness / allies) tests have definite answers. We compute all three
- *     and combine them into a verdict. There is broad agreement on this machinery.
+ *   • 신강약 (strength) — the engine surfaces the classical INGREDIENTS (득령/득지/득세, i.e.
+ *     월지 command, rootedness, allies) but NOT the 신강/신약 verdict. The call is the reading
+ *     layer's, shown with reasoning and offered as contestable (order: 월지 → 인성 → 비겁).
  *
- *   • 용신 (the "useful god") is INTERPRETIVE and contested. Different schools pick it
- *     differently, and a real practitioner weighs the whole chart. We therefore compute a
- *     PROVISIONAL 억부 (support/suppress) candidate AND a separate 조후 (climate) candidate,
- *     and — crucially — we flag when they disagree instead of silently resolving the tension.
- *     This is a starting point for a human reading, never a verdict.
+ *   • 용신 (the "useful god") is the most discretion-heavy call in the chart and is NEVER a
+ *     calculator output. The engine emits only the 조후 SEASON classification as a labeled,
+ *     overridable default (see computeJohuSeason) — a starting prior, not a verdict.
  */
 import {
   GENERATES,
   CONTROLS,
   STEMS,
+  BRANCHES,
   type Element,
   type Stem,
 } from "./constants.js";
@@ -84,28 +83,33 @@ function phaseOf(dm: Element, season: Element): Phase {
   return "sa"; // CONTROLS[season] === dm — the season drains you
 }
 
-export type StrengthVerdict = "태강" | "신강" | "중화" | "신약" | "태약";
-
 export interface StrengthResult {
   phase: PhaseInfo;
-  /** 득령: does the Day Master command the month? True when the phase is 旺 or 相. */
+  /** 득령 (월지): does the Day Master command the month? True when the phase is 旺 or 相. */
   hasMonthCommand: boolean;
+  /** 월지 통근: the Day Master's OWN element sits hidden in the MONTH branch (the primary root). */
+  rootedInMonthBranch: boolean;
   /** 득지 (통근): branches whose hidden stems contain the Day Master's OWN element. */
   strongRoots: number;
   /** Branches whose hidden stems contain the Day Master's RESOURCE element (a weaker root). */
   resourceRoots: number;
   hasRoot: boolean;
+  /** 인성 (resource) present anywhere in the chart. */
+  resourcePresent: boolean;
+  /** 비겁 (companion) present beyond the Day Master stem itself. */
+  companionPresent: boolean;
   /** 득세: weighted count of allies (비겁 + 인성) across all eight characters incl. hidden stems. */
   supportCount: number;
   /** Weighted count of that which drains/opposes you (식상 + 재성 + 관살). */
   drainCount: number;
   hasAllies: boolean;
-  /** How many of the three classical conditions (득령/득지/득세) the Day Master meets. */
+  /** How many of the three classical conditions (득령/득지/득세) the Day Master meets, 0–3. */
   conditionsMet: number;
-  verdict: StrengthVerdict;
-  /** True when the three conditions split — a genuinely mixed chart a human should weigh. */
-  borderline: boolean;
-  /** English one-liner the UI/export can show verbatim. */
+  /**
+   * INGREDIENT summary only. The 신강/신약 call is the reading layer's — weighed from these
+   * ingredients (order: 월지 → 인성 → 비겁), shown with reasoning, offered as contestable.
+   * The engine never hands down a verdict.
+   */
   summary: string;
 }
 
@@ -139,6 +143,10 @@ export function computeStrength(
     if (els.includes(roles.resource)) resourceRoots += 1;
   }
   const hasRoot = strongRoots > 0;
+  // 월지 통근: the primary root — the Day Master's OWN element hidden in the MONTH branch.
+  const rootedInMonthBranch = pillars.month.branch.hiddenStems
+    .map((si) => STEMS[si]!.element)
+    .includes(dm);
 
   // 3) 득세 — allies vs drainers, from the weighted tally (stems + all hidden stems).
   const w = elements.weighted;
@@ -146,165 +154,124 @@ export function computeStrength(
   const supportCount = Math.max(0, w[roles.companion] - 1) + w[roles.resource];
   const drainCount = w[roles.output] + w[roles.wealth] + w[roles.officer];
   const hasAllies = supportCount > drainCount;
+  // 인성 (resource) present anywhere; 비겁 (companion) present beyond the Day Master stem itself.
+  const resourcePresent = w[roles.resource] > 0;
+  const companionPresent = Math.max(0, w[roles.companion] - 1) > 0;
 
-  // Combine.
+  // How many of the three classical conditions the Day Master meets — an INGREDIENT count, not
+  // a verdict. The 신강/신약 call is the reading layer's.
   const conditionsMet =
     (hasMonthCommand ? 1 : 0) + (hasRoot ? 1 : 0) + (hasAllies ? 1 : 0);
 
-  let verdict: StrengthVerdict;
-  let borderline = false;
-  if (conditionsMet === 3) {
-    verdict = supportCount > drainCount * 3 || drainCount === 0 ? "태강" : "신강";
-  } else if (conditionsMet === 0) {
-    verdict = drainCount > supportCount * 3 || supportCount === 0 ? "태약" : "신약";
-  } else {
-    verdict = "중화";
-    borderline = true;
-  }
-
   const summary =
-    `Day Master ${dayMaster.hanja} (${dayMaster.roman}, ${dm}) is ${verdict}` +
-    ` — month phase ${PHASE[phase].hanja}(${PHASE[phase].en}); ` +
+    `Day Master ${dayMaster.hanja} (${dayMaster.roman}, ${dm}) — INGREDIENTS for the strength call ` +
+    `(the 신강/신약 verdict is the reading's, not the engine's): ` +
+    `month phase ${PHASE[phase].hanja}(${PHASE[phase].en}); ` +
     `${hasMonthCommand ? "득령" : "실령"}, ${hasRoot ? "득지" : "실지"}, ${hasAllies ? "득세" : "실세"}; ` +
-    `support ${supportCount} vs drain ${drainCount}.`;
+    `${rootedInMonthBranch ? "rooted in the month branch" : "no root in the month branch"}; ` +
+    `인성 ${resourcePresent ? "present" : "absent"}, 비겁 ${companionPresent ? "present" : "absent"}; ` +
+    `support ${supportCount} vs drain ${drainCount} (${conditionsMet}/3 conditions).`;
 
   return {
     phase: PHASE[phase],
     hasMonthCommand,
+    rootedInMonthBranch,
     strongRoots,
     resourceRoots,
     hasRoot,
+    resourcePresent,
+    companionPresent,
     supportCount,
     drainCount,
     hasAllies,
     conditionsMet,
-    verdict,
-    borderline,
     summary,
   };
 }
 
-// ── 용신 (useful god): PROVISIONAL ────────────────────────────────────────────
+// ── 조후 (climate) SEASON: a labeled, overridable default ─────────────────────
+//
+// 용신 (the "useful god") is NOT computed here and is never a calculator output (spec §6). The
+// engine emits only the 조후 SEASON classification — the climate season the chart is born into —
+// as a starting prior a practitioner may keep or override.
+//
+// The climate season LAGS the calendar term by one branch: the four 生地 season-openers
+// (寅 spring / 巳 summer / 申 autumn / 亥 winter) still read climatically as the tail of the
+// PRIOR season (the cold of early 寅, the heat lingering into 申, etc.). Implemented as a
+// one-branch offset so each climate season runs one branch later than the bare calendar season:
+//   winter {子 丑 寅}, spring {卯 辰 巳}, summer {午 未 申}, autumn {酉 戌 亥}.
+// The classification is firmest for 寅월 (deep-winter cold at the calendar start of spring).
 
-export interface EokbuCandidate {
-  /** Always true: 억부 output is a candidate, not a verdict. */
-  provisional: true;
-  /** Elements that would help balance the Day Master (favorable, 희용신). */
-  usefulElements: Element[];
-  /** Elements likely unfavorable given the strength (기신). */
-  avoidElements: Element[];
-  rationale: string;
+export type JohuSeasonKey = "spring" | "summer" | "autumn" | "winter";
+
+interface SeasonLabel {
+  hangul: string;
+  hanja: string;
+  en: string;
 }
 
-export interface JohuCandidate {
-  /** True when the chart is climatically lopsided (too hot or too cold) and wants correction. */
-  tension: boolean;
-  /** "hot" | "cold" | "balanced". */
-  climate: "hot" | "cold" | "balanced";
-  /** The element that would temper the climate (water for hot, fire for cold); null if balanced. */
-  candidateElement: Element | null;
-  rationale: string;
-}
+const SEASON_LABEL: Record<JohuSeasonKey, SeasonLabel> = {
+  spring: { hangul: "봄", hanja: "春", en: "Spring" },
+  summer: { hangul: "여름", hanja: "夏", en: "Summer" },
+  autumn: { hangul: "가을", hanja: "秋", en: "Autumn" },
+  winter: { hangul: "겨울", hanja: "冬", en: "Winter" },
+};
 
-export interface YongsinResult {
-  /** 억부 (support/suppress) candidate — the default method here. */
-  eokbu: EokbuCandidate;
-  /** 조후 (climate) candidate — a separate lens that can disagree with 억부. */
-  johu: JohuCandidate;
-  /** True when 억부 and 조후 point in incompatible directions. Surface, do not resolve. */
-  diverges: boolean;
-  /** Standing caveat the UI/export must show. */
+/** Climate season by month-branch index (0=子 … 11=亥), lagging the calendar term by one branch. */
+const JOHU_SEASON: JohuSeasonKey[] = [
+  "winter", // 0 子
+  "winter", // 1 丑
+  "winter", // 2 寅  ← calendar spring, but climatically still deep winter (firmest case)
+  "spring", // 3 卯
+  "spring", // 4 辰
+  "spring", // 5 巳
+  "summer", // 6 午
+  "summer", // 7 未
+  "summer", // 8 申
+  "autumn", // 9 酉
+  "autumn", // 10 戌
+  "autumn", // 11 亥
+];
+
+const JOHU_NOTE =
+  "조후 season is a labeled, overridable DEFAULT — a starting prior for the reading, not a " +
+  "verdict. 용신 (the useful god) is interpretive and school-dependent and is deliberately NOT " +
+  "emitted by the engine; a practitioner weighs the whole chart.";
+
+export interface JohuSeason {
+  season: JohuSeasonKey;
+  hangul: string;
+  hanja: string;
+  en: string;
+  /** Hanja of the month branch this was read from. */
+  monthBranchHanja: string;
+  /** True when the month branch is a 生地 season-opener (寅巳申亥) read back one season. */
+  seasonOpener: boolean;
+  /** True for 寅월 — the case where the climate/calendar lag is firmest (deep-winter cold). */
+  firmest: boolean;
+  /** Always true: this is a default the reading may override. */
+  default: true;
   note: string;
 }
 
-const NOT_SETTLED =
-  "용신 is interpretive and school-dependent. These are computed CANDIDATES to start a human " +
-  "reading — an 억부 (strength-balancing) candidate and a separate 조후 (climate) candidate — " +
-  "never a settled answer. Where they diverge, a practitioner weighs the whole chart.";
-
 /**
- * Compute PROVISIONAL 용신 candidates.
- *   • 억부: if the Day Master is weak, feed it (resource + companion); if strong, drain it
- *     (output + wealth + officer). Straightforward from the strength verdict.
- *   • 조후: independent climate read. A fire-dominant/summer chart wants Water to cool it;
- *     a water-dominant/winter chart wants Fire to warm it.
- * Then flag divergence.
+ * Classify the 조후 (climate) season the chart is born into, from the MONTH branch. A labeled,
+ * overridable default — never a 용신 and never a verdict (spec §6).
  */
-export function computeYongsin(
-  strength: StrengthResult,
-  dayMaster: Stem,
-  elements: ElementBalance,
-  monthBranchIndex: number
-): YongsinResult {
-  const dm = dayMaster.element;
-  const roles = dmRoles(dm);
-  const weak = strength.verdict === "신약" || strength.verdict === "태약";
-  const strong = strength.verdict === "신강" || strength.verdict === "태강";
-
-  // 억부 candidate.
-  let usefulElements: Element[];
-  let avoidElements: Element[];
-  let rationale: string;
-  if (weak) {
-    usefulElements = [roles.resource, roles.companion];
-    avoidElements = [roles.output, roles.wealth, roles.officer];
-    rationale =
-      "Day Master is weak, so the 억부 method favors what supports it: 인성 (resource) and " +
-      "비겁 (companion). Elements that further drain it are treated as unfavorable.";
-  } else if (strong) {
-    usefulElements = [roles.output, roles.wealth, roles.officer];
-    avoidElements = [roles.resource, roles.companion];
-    rationale =
-      "Day Master is strong, so the 억부 method favors what channels or restrains it: 식상 " +
-      "(output), 재성 (wealth), and 관살 (officer). More support is treated as unfavorable.";
-  } else {
-    // 중화 — near balance; nudge toward whichever side is thinner, but stay tentative.
-    if (strength.supportCount >= strength.drainCount) {
-      usefulElements = [roles.output, roles.wealth, roles.officer];
-      avoidElements = [roles.resource, roles.companion];
-    } else {
-      usefulElements = [roles.resource, roles.companion];
-      avoidElements = [roles.output, roles.wealth, roles.officer];
-    }
-    rationale =
-      "Day Master is near balance (중화); the 억부 lean here is slight and especially " +
-      "uncertain — a human should decide whether to strengthen or drain.";
-  }
-
-  // 조후 candidate — climate.
-  const w = elements.weighted;
-  const season = seasonElement(monthBranchIndex);
-  const fireSeason = season === "fire";
-  const waterSeason = season === "water";
-  const strongest = elements.strongest;
-
-  let climate: JohuCandidate["climate"] = "balanced";
-  let candidateElement: Element | null = null;
-  let johuRationale: string;
-  if ((w.fire > w.water && strongest === "fire") || (fireSeason && w.fire >= w.water)) {
-    climate = "hot";
-    candidateElement = "water";
-    johuRationale =
-      "The chart runs hot (Fire dominant / summer season). 조후 wants Water to cool and moisten it.";
-  } else if ((w.water > w.fire && strongest === "water") || (waterSeason && w.water >= w.fire)) {
-    climate = "cold";
-    candidateElement = "fire";
-    johuRationale =
-      "The chart runs cold (Water dominant / winter season). 조후 wants Fire to warm it.";
-  } else {
-    johuRationale = "Climate looks reasonably balanced; 조후 does not force a candidate.";
-  }
-  const tension = candidateElement !== null;
-
-  // Divergence: the 조후 candidate falls in the 억부 avoid set (or plainly outside its useful set).
-  const diverges =
-    tension &&
-    (avoidElements.includes(candidateElement!) || !usefulElements.includes(candidateElement!));
-
+export function computeJohuSeason(monthBranchIndex: number): JohuSeason {
+  const b = ((monthBranchIndex % 12) + 12) % 12;
+  const season = JOHU_SEASON[b]!;
+  const label = SEASON_LABEL[season];
+  const seasonOpener = b === 2 || b === 5 || b === 8 || b === 11; // 寅 巳 申 亥
   return {
-    eokbu: { provisional: true, usefulElements, avoidElements, rationale },
-    johu: { tension, climate, candidateElement, rationale: johuRationale },
-    diverges,
-    note: NOT_SETTLED,
+    season,
+    hangul: label.hangul,
+    hanja: label.hanja,
+    en: label.en,
+    monthBranchHanja: BRANCHES[b]!.hanja,
+    seasonOpener,
+    firmest: b === 2, // 寅월
+    default: true,
+    note: JOHU_NOTE,
   };
 }

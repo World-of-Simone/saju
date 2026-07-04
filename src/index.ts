@@ -27,9 +27,9 @@ import {
 } from "./daeun.js";
 import {
   computeStrength,
-  computeYongsin,
+  computeJohuSeason,
   type StrengthResult,
-  type YongsinResult,
+  type JohuSeason,
 } from "./strength.js";
 import type { Stem } from "./constants.js";
 
@@ -40,7 +40,7 @@ export type { CivilInput, TrueSolarTimeResult } from "./time/trueSolarTime.js";
 export type { FourPillars, Pillar } from "./pillars.js";
 export type { TenGodsResult, ElementBalance } from "./analysis.js";
 export type { DaeunResult, DaeunDirection } from "./daeun.js";
-export type { StrengthResult, YongsinResult } from "./strength.js";
+export type { StrengthResult, JohuSeason } from "./strength.js";
 
 export interface SajuInput extends SajuClockInput {
   /**
@@ -86,10 +86,16 @@ export interface SajuResult {
   dayMaster: Stem;
   tenGods: TenGodsResult;
   elements: ElementBalance;
-  /** 신강약 — Day Master strength. Deterministic. */
+  /**
+   * 신강약 INGREDIENTS (득령/득지/득세, 월지 root, 인성/비겁 presence). The 신강/신약 VERDICT is
+   * deliberately NOT emitted — that call belongs to the reading layer (spec §6).
+   */
   strength: StrengthResult;
-  /** 용신 — PROVISIONAL useful-god candidates (억부 + 조후), with a divergence flag. */
-  yongsin: YongsinResult;
+  /**
+   * 조후 (climate) SEASON — a labeled, overridable default read from the month branch. NOT a
+   * 용신: the useful god is never a calculator output (spec §6).
+   */
+  johuSeason: JohuSeason;
   daeun?: { forward?: DaeunResult; reverse?: DaeunResult; inclusivityNote?: string };
   warnings: string[];
 }
@@ -134,7 +140,7 @@ export function computeSaju(input: SajuInput): SajuResult {
   const tenGods = computeTenGods(pillars);
   const elements = computeElementBalance(pillars);
   const strength = computeStrength(pillars, dayMaster, elements);
-  const yongsin = computeYongsin(strength, dayMaster, elements, pillars.month.branch.index);
+  const johuSeason = computeJohuSeason(pillars.month.branch.index);
 
   let daeun: SajuResult["daeun"];
   if (input.daeun) {
@@ -159,5 +165,5 @@ export function computeSaju(input: SajuInput): SajuResult {
     }
   }
 
-  return { input, trueSolarTime, pillars, dayMaster, tenGods, elements, strength, yongsin, daeun, warnings };
+  return { input, trueSolarTime, pillars, dayMaster, tenGods, elements, strength, johuSeason, daeun, warnings };
 }

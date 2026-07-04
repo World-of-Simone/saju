@@ -13,16 +13,9 @@ import {
 import type { Pillar } from "../dist/pillars.js";
 import type { PillarTenGods, TenGodLabel } from "../dist/analysis.js";
 import type { DaeunResult } from "../dist/daeun.js";
-import { warmCities, searchCities, type City } from "./cities";
 
 // ---------- tiny DOM helpers ----------
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
-const el = (tag: string, cls?: string, html?: string) => {
-  const n = document.createElement(tag);
-  if (cls) n.className = cls;
-  if (html !== undefined) n.innerHTML = html;
-  return n;
-};
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 
 const elClass = (e: Element) => `el-${e}`;
@@ -59,7 +52,7 @@ const STATIC: Record<Lang, Record<string, string>> = {
     hero_precision:
       "This calculator follows a Korean master's method: your pillars are read from the clock time you were born at, exactly as recorded — no timezone, daylight-saving, or true-solar adjustment. The one place it insists on precision is the 절기 (solar-term) boundaries that set your month pillar, computed to the second; the year turns at 입춘 and the day at 23:00.",
     hero_cta:
-      'Enter four details<a href="#accuracy-note" class="asterisk">*</a> and cast your chart.',
+      'Enter a few details<a href="#accuracy-note" class="asterisk">*</a> and cast your chart.',
     form_title: "Your birth details",
     f_date: "Date of birth",
     f_time: "Time of birth",
@@ -67,13 +60,6 @@ const STATIC: Record<Lang, Record<string, string>> = {
     f_time_unknown: "Time unknown",
     f_unknown_hint:
       "Without a birth time, we can still build most of your chart, but not the part drawn from the hour you were born.",
-    f_place: "Birthplace",
-    f_place_ph: "Start typing a city…",
-    f_place_hint:
-      "Recorded for reference only — under this method your birthplace does not adjust the time or change the pillars.",
-    f_adv: "Advanced: set longitude & timezone manually",
-    f_lon: "Longitude (° east +)",
-    f_tz: "IANA timezone",
     f_gender:
       'Gender <span class="legend-ko">— for the direction of your 대운 (luck pillars)</span>',
     f_gender_hint:
@@ -95,7 +81,7 @@ const STATIC: Record<Lang, Record<string, string>> = {
     hero_precision:
       "이 계산기는 한국 선생님의 방식을 따릅니다: 기둥은 기록된 출생 시각을 있는 그대로 읽으며, 시간대·일광절약·진태양시 보정을 적용하지 않습니다. 정밀함을 고집하는 단 한 곳은 월주를 정하는 절기 경계로, 초 단위까지 계산됩니다. 해는 입춘에, 날은 23시에 바뀝니다.",
     hero_cta:
-      '네 가지 정보<a href="#accuracy-note" class="asterisk">*</a>를 입력하고 사주를 뽑아 보세요.',
+      '몇 가지 정보<a href="#accuracy-note" class="asterisk">*</a>를 입력하고 사주를 뽑아 보세요.',
     form_title: "출생 정보",
     f_date: "생년월일",
     f_time: "태어난 시각",
@@ -103,13 +89,6 @@ const STATIC: Record<Lang, Record<string, string>> = {
     f_time_unknown: "시간 모름",
     f_unknown_hint:
       "태어난 시각이 없어도 사주의 대부분을 세울 수 있지만, 태어난 시(時)에서 나오는 부분은 세울 수 없습니다.",
-    f_place: "출생지",
-    f_place_ph: "도시 이름을 입력하세요…",
-    f_place_hint:
-      "참고용으로만 기록됩니다 — 이 방식에서는 출생지가 시간을 보정하거나 기둥을 바꾸지 않습니다.",
-    f_adv: "고급: 경도와 시간대 직접 설정",
-    f_lon: "경도 (동경 +)",
-    f_tz: "IANA 시간대",
     f_gender:
       '성별 <span class="legend-ko">— 대운(운의 기둥)의 방향을 정하기 위함</span>',
     f_gender_hint:
@@ -143,76 +122,6 @@ function applyStaticI18n() {
   });
   document.documentElement.lang = lang;
 }
-
-// ---------- city autocomplete ----------
-const cityInput = $<HTMLInputElement>("#city-input");
-const sugBox = $<HTMLUListElement>("#city-suggestions");
-const lonInput = $<HTMLInputElement>("#longitude");
-const tzInput = $<HTMLInputElement>("#timezone");
-let activeIdx = -1;
-let matches: City[] = [];
-let searchSeq = 0; // guards against out-of-order async results
-
-/** Secondary line for a city: "Region, Country" (region omitted when absent/redundant). */
-const cityDetail = (c: City) =>
-  c.region && c.region !== c.name ? `${c.region}, ${c.country}` : c.country;
-
-function applyCity(c: City) {
-  cityInput.value = `${c.name}, ${cityDetail(c)}`;
-  lonInput.value = String(c.lon);
-  tzInput.value = c.tz;
-}
-
-function renderSuggestions() {
-  sugBox.innerHTML = "";
-  if (matches.length === 0) {
-    sugBox.hidden = true;
-    return;
-  }
-  matches.forEach((c, i) => {
-    const li = el("li", i === activeIdx ? "active" : "");
-    li.innerHTML = `<span>${esc(c.name)}</span><span class="country">${esc(cityDetail(c))}</span>`;
-    li.addEventListener("mousedown", (e) => {
-      e.preventDefault();
-      applyCity(c);
-      sugBox.hidden = true;
-    });
-    sugBox.appendChild(li);
-  });
-  sugBox.hidden = false;
-}
-
-// Warm the (lazily fetched) city dataset as soon as the field gains focus.
-cityInput.addEventListener("focus", warmCities);
-
-cityInput.addEventListener("input", () => {
-  const q = cityInput.value.trim();
-  activeIdx = -1;
-  if (q.length < 1) {
-    matches = [];
-    renderSuggestions();
-    return;
-  }
-  const seq = ++searchSeq;
-  searchCities(q).then((results) => {
-    if (seq !== searchSeq) return; // a newer query superseded this one
-    matches = results;
-    renderSuggestions();
-  }).catch(() => {
-    if (seq !== searchSeq) return;
-    matches = [];
-    renderSuggestions(); // fall back silently; manual longitude/timezone entry still works
-  });
-});
-
-cityInput.addEventListener("keydown", (e) => {
-  if (sugBox.hidden) return;
-  if (e.key === "ArrowDown") { activeIdx = Math.min(activeIdx + 1, matches.length - 1); renderSuggestions(); e.preventDefault(); }
-  else if (e.key === "ArrowUp") { activeIdx = Math.max(activeIdx - 1, 0); renderSuggestions(); e.preventDefault(); }
-  else if (e.key === "Enter" && activeIdx >= 0) { applyCity(matches[activeIdx]!); sugBox.hidden = true; e.preventDefault(); }
-  else if (e.key === "Escape") { sugBox.hidden = true; }
-});
-cityInput.addEventListener("blur", () => setTimeout(() => (sugBox.hidden = true), 120));
 
 // ---------- tooltip ----------
 const tooltip = $("#tooltip");
@@ -295,7 +204,7 @@ function daeunText(d: DaeunResult): string {
   return [head, ...lines].join("\n");
 }
 
-function buildChartText(r: SajuResult, place: string): string {
+function buildChartText(r: SajuResult): string {
   const inp = r.input;
   const e = r.elements;
   const order: Element[] = ["wood", "fire", "earth", "metal", "water"];
@@ -332,7 +241,6 @@ function buildChartText(r: SajuResult, place: string): string {
   L.push(
     `${tr("Time", "시각")}: ${timeStr}${known ? tr(" (recorded clock time, used as-is)", " (기록된 시계 시각, 그대로 사용)") : tr(" (Hour Pillar omitted)", " (시주 생략)")}`,
   );
-  L.push(`${tr("Birthplace", "출생지")}: ${place || tr("(unspecified)", "(미지정)")} ${tr("(reference only — not used to adjust the time)", "(참고용 — 시간 보정에 사용되지 않음)")}`);
   if (sex) L.push(`${tr("Gender used for luck-pillar direction (classical binary rule)", "대운 방향에 사용된 성별 (고전 이분법)")}: ${tr(sex, sex === "male" ? "남성" : "여성")}`);
   L.push("");
 
@@ -672,12 +580,9 @@ function renderWarnings(r: SajuResult): string {
 
 // Remember the last computed chart so a language switch can re-render it.
 let lastResult: SajuResult | null = null;
-let lastPlace = "";
-
-function render(r: SajuResult, place: string) {
+function render(r: SajuResult) {
   lastResult = r;
-  lastPlace = place;
-  currentChartText = buildChartText(r, place);
+  currentChartText = buildChartText(r);
   const out = $("#results");
   out.innerHTML =
     copyBar() +
@@ -704,7 +609,7 @@ function setLang(next: Lang) {
   localStorage.setItem("saju-lang", next);
   applyStaticI18n();
   syncLangButtons();
-  if (lastResult) render(lastResult, lastPlace); // re-render results in the new language
+  if (lastResult) render(lastResult); // re-render results in the new language
 }
 
 document.querySelectorAll<HTMLButtonElement>(".lang-btn").forEach((b) => {
@@ -740,12 +645,10 @@ $<HTMLFormElement>("#saju-form").addEventListener("submit", (e) => {
   try {
     const r = computeSaju({
       year: y!, month: mo!, day: d!, hour, minute,
-      timezone: tzInput.value.trim(),
-      longitude: parseFloat(lonInput.value),
       hasBirthTime: hasTime,
       daeun: { fromConvention: { sex } },
     });
-    render(r, cityInput.value.trim());
+    render(r);
   } catch (err) {
     $("#results").innerHTML = `<section class="card result-section"><p style="color:var(--accent)">${tr("Could not compute chart", "명식을 계산할 수 없습니다")}: ${esc((err as Error).message)}</p></section>`;
   }

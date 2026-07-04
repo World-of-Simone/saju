@@ -1,35 +1,39 @@
 :root {
-  /* Dancheong ground & surfaces */
-  --canvas: #23211c;        /* dark backdrop the whole page sits on */
-  --ink: #2a2418;           /* body ink on paper */
-  --ink-soft: #6f6444;      /* muted label ink */
-  --paper: #f4ecd8;         /* primary card surface */
-  --paper-2: #efe6ce;       /* inset / secondary surface */
-  --paper-hi: #faeede;      /* self-wash highlight */
-  --line: #d3c39c;          /* rules on paper */
-  --line-soft: #cbb58a;     /* hairline dividers */
+  /* Clean light theme — white surfaces, black ink */
+  --canvas: #ffffff;        /* page background */
+  --ink: #111111;           /* body text (black) */
+  --ink-soft: #666666;      /* muted label ink */
+  --paper: #ffffff;         /* primary card surface */
+  --paper-2: #f6f6f6;       /* inset / secondary surface */
+  --paper-hi: #ffffff;      /* highlight surface */
+  --line: #e5e5e5;          /* borders */
+  --line-soft: #dddddd;     /* hairline dividers */
 
-  /* Dancheong obangsaek accents */
-  --green: #0e3b34;         /* deep pillar green (primary chrome) */
-  --accent: #d1272b;        /* seal red */
-  --accent-soft: #b33427;
-  --gold: #e3a80e;
-  --gold-deep: #c98f14;
+  /* Monochrome chrome (buttons, headings, seals, tooltips) */
+  --green: #1a1a1a;         /* primary chrome */
+  --accent: #1a1a1a;        /* emphasis */
+  --accent-soft: #555555;
+  --gold: #999999;          /* subtle marker */
+  --gold-deep: #bbbbbb;
   --black: #1a1a1a;
 
-  --shadow: 0 1px 2px rgba(20, 18, 12, 0.08), 0 10px 30px rgba(20, 18, 12, 0.14);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 20px rgba(0, 0, 0, 0.06);
 
-  /* Five-element palette (오행) — Dancheong-tuned. */
+  /* Five-element palette (오행) — kept so the characters & bars stay color-coded. */
   --wood: #147a6a;
   --fire: #d1272b;
   --earth: #c98f14;
   --metal: #6e7377;
   --water: #0f4c81;
 
-  /* Type system */
-  --font-serif: "Nanum Myeongjo", "Noto Serif KR", serif;
-  --font-display: "Song Myung", "Nanum Myeongjo", serif;
+  /* Type system
+     Title stays a serif (Nanum Myeongjo, chosen); the Chinese characters keep a
+     serif so they render properly; every other level is a clean sans (Archivo). */
   --font-sans: "Archivo", system-ui, -apple-system, sans-serif;
+  --font-title: "Nanum Myeongjo", "Noto Serif KR", serif;
+  --font-cjk: "Nanum Myeongjo", "Noto Serif KR", serif;
+  --font-serif: var(--font-sans); /* body/UI text → sans */
+  --font-display: var(--font-sans); /* headings → sans */
   --font-mono: "Space Mono", ui-monospace, monospace;
 }
 
@@ -39,10 +43,7 @@ body {
   margin: 0;
   font-family: var(--font-serif);
   color: var(--ink);
-  background:
-    radial-gradient(circle at 12% -8%, rgba(227, 168, 14, 0.10), transparent 42%),
-    radial-gradient(circle at 100% 0%, rgba(209, 39, 43, 0.08), transparent 38%),
-    var(--canvas);
+  background: var(--canvas);
   line-height: 1.6;
 }
 
@@ -56,10 +57,9 @@ body {
   display: inline-flex;
   gap: 2px;
   padding: 3px;
-  border: 1px solid rgba(227, 168, 14, 0.4);
+  border: 1px solid var(--line);
   border-radius: 999px;
-  background: rgba(20, 18, 12, 0.35);
-  backdrop-filter: blur(4px);
+  background: #fff;
   z-index: 5;
 }
 .lang-btn {
@@ -71,25 +71,24 @@ body {
   border: 0;
   border-radius: 999px;
   background: transparent;
-  color: var(--paper);
+  color: var(--ink-soft);
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
-.lang-btn:hover { color: var(--paper-hi); }
+.lang-btn:hover { color: var(--ink); }
 .lang-btn.active {
-  background: var(--green);
-  color: var(--paper-hi);
-  box-shadow: inset 0 0 0 1px rgba(227, 168, 14, 0.55);
+  background: var(--ink);
+  color: #fff;
 }
 
-/* ---- Hero (sits on the dark canvas → light ink) ---- */
-.hero { text-align: center; margin-bottom: 2.75rem; color: var(--paper); }
+/* ---- Hero (clean white → black ink) ---- */
+.hero { text-align: center; margin-bottom: 2.75rem; color: var(--ink); }
 .hero h1 {
-  font-family: var(--font-display);
+  font-family: var(--font-title);
   font-size: clamp(2.8rem, 6.5vw, 4.4rem);
   margin: 0;
   letter-spacing: 0.02em;
-  color: var(--paper-hi);
+  color: var(--ink);
 }
 .hero-en {
   display: inline-block;
@@ -107,10 +106,10 @@ body {
   color: var(--gold);
   margin: 1.1rem auto 0;
 }
-.tagline { max-width: 54ch; margin: 0.85rem auto 0; color: #d8cfb6; }
-.tagline strong { color: var(--gold); }
-.lead-cta { max-width: 46ch; margin: 1rem auto 0; font-weight: 700; color: var(--paper-hi); }
-.asterisk { color: var(--gold); text-decoration: none; }
+.tagline { max-width: 54ch; margin: 0.85rem auto 0; color: var(--ink-soft); }
+.tagline strong { color: var(--ink); }
+.lead-cta { max-width: 46ch; margin: 1rem auto 0; font-weight: 700; color: var(--ink); }
+.asterisk { color: var(--ink); text-decoration: underline; }
 .asterisk:hover { text-decoration: underline; }
 .philosophy {
   font-size: 0.9rem;
@@ -129,36 +128,16 @@ body {
   .layout { grid-template-columns: 1fr; }
 }
 
-/* ---- Dancheong panel frame (cards & result sections) ---- */
+/* ---- Clean panel frame (cards & result sections) ---- */
 .card,
 .result-section {
   position: relative;
   background: var(--paper);
-  border: none;
+  border: 1px solid var(--line);
   border-radius: 0;
-  padding: 2.4rem 2rem 2rem;
+  padding: 2rem;
   overflow: hidden;
-  box-shadow:
-    0 0 0 4px var(--green),
-    0 0 0 9px var(--gold),
-    0 0 0 13px var(--accent),
-    0 28px 60px -30px rgba(0, 0, 0, 0.65);
-}
-/* obangsaek register stripe across the top of every panel */
-.card::before,
-.result-section::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 9px;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--green) 0 22px,
-    var(--accent) 22px 44px,
-    var(--gold) 44px 66px,
-    var(--black) 66px 88px,
-    var(--metal) 88px 110px
-  );
+  box-shadow: var(--shadow);
 }
 .card h2 { margin: 0 0 1.25rem; font-size: 1.2rem; font-family: var(--font-display); letter-spacing: 0.01em; }
 
@@ -215,7 +194,7 @@ input:focus { outline: none; border-bottom-color: var(--accent); }
   display: inline-grid;
   place-items: center;
   width: 1.9rem; height: 1.9rem;
-  font-family: var(--font-serif);
+  font-family: var(--font-cjk);
   font-size: 1rem; font-weight: 800;
   color: var(--paper-hi);
   background: var(--accent);
@@ -275,7 +254,7 @@ input:focus { outline: none; border-bottom-color: var(--accent); }
 }
 .pillar-head .badge { display: block; font-size: 0.6rem; color: var(--gold); font-weight: 700; margin-top: 2px; }
 .char { padding: 0.65rem 0.25rem; }
-.char .hanja { font-family: var(--font-serif); font-weight: 800; font-size: 2.6rem; line-height: 1; display: block; }
+.char .hanja { font-family: var(--font-cjk); font-weight: 800; font-size: 2.6rem; line-height: 1; display: block; }
 .char .reading { font-family: var(--font-sans); font-size: 0.74rem; color: var(--ink-soft); margin-top: 0.3rem; }
 .char .tengod { font-family: var(--font-sans); font-size: 0.72rem; color: var(--accent-soft); margin-top: 0.2rem; min-height: 1em; }
 .char.stem { border-bottom: 1px dashed var(--line-soft); }
@@ -306,7 +285,7 @@ input:focus { outline: none; border-bottom-color: var(--accent); }
 .el-bars { display: flex; flex-direction: column; gap: 0.55rem; }
 .el-bar { display: grid; grid-template-columns: 5.5rem 1fr 2.5rem; align-items: center; gap: 0.6rem; font-size: 0.88rem; }
 .el-bar .track { background: var(--paper-2); border: 1px solid var(--line-soft); border-radius: 0; height: 0.9rem; overflow: hidden; }
-.el-bar .fill { height: 100%; border-radius: 0; }
+.el-bar .fill { display: block; height: 100%; border-radius: 0; }
 .el-bar .lab { font-family: var(--font-sans); font-size: 0.8rem; }
 .el-note { font-size: 0.85rem; color: var(--ink-soft); margin-top: 0.85rem; }
 .el-note b { color: var(--ink); }
@@ -318,7 +297,7 @@ input:focus { outline: none; border-bottom-color: var(--accent); }
 .daeun-track { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.4rem; }
 .daeun-cell { flex: 0 0 auto; min-width: 3.6rem; text-align: center; border: 1px solid var(--line-soft); border-radius: 0; padding: 0.55rem 0.35rem; background: var(--paper); }
 .daeun-cell .age { font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink-soft); }
-.daeun-cell .gz { font-family: var(--font-serif); font-weight: 800; font-size: 1.45rem; line-height: 1.1; }
+.daeun-cell .gz { font-family: var(--font-cjk); font-weight: 800; font-size: 1.45rem; line-height: 1.1; }
 .daeun-cell .rd { font-family: var(--font-sans); font-size: 0.64rem; color: var(--ink-soft); }
 .inclusivity { font-size: 0.82rem; color: var(--ink-soft); background: var(--paper-2); border-radius: 0; border-left: 3px solid var(--gold); padding: 0.65rem 0.85rem; margin-top: 0.5rem; }
 
@@ -402,6 +381,6 @@ input:focus { outline: none; border-bottom-color: var(--accent); }
 .tooltip .tt-title { font-weight: 700; margin-bottom: 0.25rem; }
 .tooltip .tt-title .tt-ko { color: var(--gold); font-weight: 500; margin-left: 0.35rem; }
 
-/* ---- Footer (sits on the dark canvas → light ink) ---- */
-.footer { text-align: center; margin-top: 3.5rem; font-size: 0.95rem; color: #b7ad92; line-height: 1.7; }
-.footer a { color: var(--gold); }
+/* ---- Footer (clean white → muted ink) ---- */
+.footer { text-align: center; margin-top: 3.5rem; font-size: 0.95rem; color: var(--ink-soft); line-height: 1.7; }
+.footer a { color: var(--ink); }

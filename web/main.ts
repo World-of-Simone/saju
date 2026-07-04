@@ -46,13 +46,7 @@ const polName = (p: "yang" | "yin") => POLARITY_LABEL[lang][p];
 /** Static page copy (index.html), filled in by data-i18n attributes. */
 const STATIC: Record<Lang, Record<string, string>> = {
   en: {
-    hero_title: "Welcome to your Saju reading with Saju Master Kim.",
-    hero_tagline:
-      "Saju is ancient Korean art that reads your life from the pattern the sky held at the hour you were born, arranged into a portrait of your character, your closest relationships, and the seasons your luck moves through.",
-    hero_precision:
-      "This calculator follows a Korean master's method: your pillars are read from the clock time you were born at, exactly as recorded — no timezone, daylight-saving, or true-solar adjustment. The one place it insists on precision is the 절기 (solar-term) boundaries that set your month pillar, computed to the second; the year turns at 입춘 and the day at 23:00.",
-    hero_cta:
-      'Enter a few details<a href="#accuracy-note" class="asterisk">*</a> and cast your chart.',
+    hero_title: "Cast Your Saju Chart",
     form_title: "Your birth details",
     f_date: "Date of birth",
     f_time: "Time of birth",
@@ -75,13 +69,7 @@ const STATIC: Record<Lang, Record<string, string>> = {
       'City data © <a href="https://www.geonames.org/" target="_blank" rel="noopener noreferrer">GeoNames</a>, licensed under CC BY 4.0.',
   },
   ko: {
-    hero_title: "김선생님과 함께하는 사주 풀이에 오신 것을 환영합니다.",
-    hero_tagline:
-      "사주는 당신이 태어난 시각에 하늘이 품고 있던 무늬로부터 삶을 읽어내는 한국의 오래된 예술로, 당신의 성품과 가장 가까운 관계들, 그리고 운이 흐르는 계절들을 하나의 초상으로 그려냅니다.",
-    hero_precision:
-      "이 계산기는 한국 선생님의 방식을 따릅니다: 기둥은 기록된 출생 시각을 있는 그대로 읽으며, 시간대·일광절약·진태양시 보정을 적용하지 않습니다. 정밀함을 고집하는 단 한 곳은 월주를 정하는 절기 경계로, 초 단위까지 계산됩니다. 해는 입춘에, 날은 23시에 바뀝니다.",
-    hero_cta:
-      '몇 가지 정보<a href="#accuracy-note" class="asterisk">*</a>를 입력하고 사주를 뽑아 보세요.',
+    hero_title: "사주 뽑기",
     form_title: "출생 정보",
     f_date: "생년월일",
     f_time: "태어난 시각",

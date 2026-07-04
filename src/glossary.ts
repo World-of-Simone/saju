@@ -175,7 +175,7 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
     explain:
       "The element a chart most needs for balance — the pivot of a reading. Unlike strength, choosing the 용신 is interpretive and varies by school, so this tool offers CANDIDATES (never a verdict): an 억부 candidate and a 조후 candidate, flagging when they disagree.",
     explainKo:
-      "사주의 균형을 위해 가장 필요한 기운으로, 풀이의 축이 됩니다. 신강약과 달리 용신은 해석이자 유파마다 달라, 이 도구는 결론을 내리지 않고 후보만 짚습니다.",
+      "사주의 균형을 위해 가장 필요한 기운으로, 풀이의 축이 됩니다. 신강약과 달리 용신은 해석의 영역이자 유파마다 달라서, 이 도구는 결론을 내리지 않고 후보만 짚어 줍니다.",
   },
   eokbu: {
     term: "eokbu",
@@ -195,7 +195,7 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
     explain:
       "A separate way to pick a 용신, by temperature: a chart that runs hot (Fire-heavy / summer) wants Water to cool it; one that runs cold (Water-heavy / winter) wants Fire to warm it. It can disagree with the 억부 candidate — that tension is meaningful, not an error.",
     explainKo:
-      "기후로 용신을 잡는 방법입니다. 화가 많거나 여름생이라 더운 사주는 수로 식히고, 수가 많거나 겨울생이라 찬 사주는 화로 덥힙니다. 억부와 어긋날 수 있는데, 그 긴장이 곧 의미입니다.",
+      "기후로 용신을 잡는 방법입니다. 화가 많거나 여름생이라 더운 사주는 수로 식히고, 수가 많거나 겨울생이라 찬 사주는 화로 덥힙니다. 억부와 어긋날 수 있는데, 그렇게 갈리는 자리가 오히려 의미가 됩니다.",
   },
   gongmang: {
     term: "gongmang",
@@ -225,7 +225,7 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
     explain:
       "Three branches that lock together into a single element frame (e.g. 申子辰 → Water). A full set makes that element read as strong regardless of its raw headcount; a 반합 (half, the peak plus one) is a real but weaker pull.",
     explainKo:
-      "세 지지가 하나의 오행으로 뭉치는 결합입니다(예: 申子辰 → 수). 셋이 다 모이면 글자 수와 무관하게 그 오행이 강해지고, 왕지에 하나만 더해진 반합은 약하지만 실제 있는 끌림입니다.",
+      "세 지지가 하나의 오행으로 뭉치는 결합입니다(예: 申子辰 → 수). 셋이 다 모이면 글자 수와 상관없이 그 오행이 강해지고, 왕지에 하나만 더해진 반합은 힘은 약해도 실제로 작용하는 끌림입니다.",
   },
   banghap: {
     term: "banghap",
@@ -235,7 +235,7 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
     explain:
       "Three branches of the same season/direction joining as one element (e.g. 巳午未 → Fire, summer/south). Like 삼합 it concentrates an element, but through seasonal kinship rather than the harmony triangle.",
     explainKo:
-      "같은 계절·방위의 세 지지가 한 오행으로 뭉치는 결합입니다(예: 巳午未 → 화, 여름·남방). 삼합처럼 오행을 모으되, 삼각의 조화가 아니라 계절의 친연으로 묶입니다.",
+      "같은 계절·방위의 세 지지가 한 오행으로 뭉치는 결합입니다(예: 巳午未 → 화, 여름·남방). 삼합처럼 오행을 모으지만, 삼각 구도가 아니라 같은 계절이라는 인연으로 묶입니다.",
   },
   chung: {
     term: "chung",
@@ -245,6 +245,6 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
     explain:
       "Two directly opposing branches (six apart, e.g. 子午) meeting in the chart. A clash is friction between the two palaces involved — movement, disruption, or a push-pull to be read, not automatically 'bad'.",
     explainKo:
-      "정면으로 마주 보는 두 지지(여섯 칸 떨어진, 예: 子午)가 만나는 것입니다. 충은 두 자리 사이의 마찰 — 움직임·흔들림·밀당으로 읽으며, 무조건 나쁜 것은 아닙니다.",
+      "정면으로 마주 보는 두 지지(여섯 칸 떨어진, 예: 子午)가 만나는 것입니다. 충은 두 자리 사이의 마찰 — 움직임·흔들림·밀고 당김으로 읽으며, 무조건 나쁜 것만은 아닙니다.",
   },
 };

@@ -85,14 +85,14 @@ const STATIC: Record<Lang, Record<string, string>> = {
     f_gender:
       '성별 <span class="legend-ko">— 대운(운의 기둥)의 방향을 정하는 데 필요합니다</span>',
     f_gender_hint:
-      '<span class="term" data-term="daeun">대운</span>은 태어난 해의 음양과 성별에 따라 고전 체계가 정하는 방향으로 흐릅니다. 전통에서는 성별을 둘로만 나눕니다. 가장 자신과 가깝게 느껴지는 쪽을 고르거나, 둘 다 계산해 비교해 보셔도 됩니다.',
+      '<span class="term" data-term="daeun">대운</span>은 태어난 해의 음양과 성별에 따라 흐르는 방향이 정해지며, 전통에서는 성별을 둘로만 나눕니다. 가장 자신과 가깝게 느껴지는 쪽을 고르시거나, 둘 다 계산해 비교해 보셔도 됩니다.',
     f_female: "여성",
     f_male: "남성",
     f_philosophy:
-      "사주는 삶을 돌아보게 하는 해석의 예술입니다. 앞날을 단정하는 예언도, 당신이 어떤 사람인지 못박는 판결도 아닙니다.",
+      "사주는 삶을 돌아보게 하는 해석의 예술입니다. 앞날을 못박는 예언도, 어떤 사람인지 재단하는 판결도 아닙니다.",
     f_submit: "내 사주 뽑기",
     footer_credit:
-      "이 도구는 시몬 그레이스 설이 시어머니 김희경 선생님의 감수를 받아 만들었습니다. 김 선생님은 30년 경력의 사주 명리 전문가로, 다섯 가지 고전 분야의 자격을 갖추셨으며, 한국 명리학 학회의 중앙 학술 위원으로 위촉되셨습니다. 이곳에서 만난 것이 스스로를 알고, 잘 살아가며, 세상에 선을 더하는 데 보탬이 되기를 저희 가족은 바랍니다.",
+      "이 도구는 시몬 그레이스 설이 시어머니 김희경 선생님의 감수를 받아 만들었습니다. 김 선생님은 30년 경력의 사주 명리 전문가로, 다섯 가지 고전 분야의 자격을 갖추셨으며, 한국 명리학 학회의 중앙 학술 위원으로 위촉되셨습니다. 이곳에서 얻은 것이 스스로를 이해하고, 잘 살아가며, 세상에 선을 더하는 데 보탬이 되기를 저희 가족은 바랍니다.",
     footer_geonames:
       '도시 데이터 © <a href="https://www.geonames.org/" target="_blank" rel="noopener noreferrer">GeoNames</a>, CC BY 4.0 라이선스.',
   },
@@ -248,7 +248,7 @@ function buildChartText(r: SajuResult): string {
   L.push(
     tr(
       "Traditionally read right→left: Year, Month, Day, Hour. The Day stem is the Day Master (일간) = me.",
-      "전통적으로 우→좌로 읽습니다: 연, 월, 일, 시. 일간(日干)이 곧 '나'입니다.",
+      "전통적으로 오른쪽에서 왼쪽으로 — 연, 월, 일, 시 순으로 읽습니다. 일간(日干)이 곧 '나'입니다.",
     ),
   );
   L.push(`${tr("Day Master", "일간")}: ${stemDesc(r.dayMaster)}`);
@@ -284,13 +284,13 @@ function buildChartText(r: SajuResult): string {
   L.push(
     tr(
       "The 신강/신약 VERDICT is left to the reading (weigh these in order: 월지 command → 인성 resource → 비겁 companion). The engine reports only the ingredients.",
-      "신강/신약 결론은 풀이의 몫입니다 (월지 → 인성 → 비겁 순으로 저울질). 엔진은 근거만 제시합니다.",
+      "신강/신약 결론은 풀이의 몫입니다 (월지 → 인성 → 비겁 순으로 저울질). 계산기는 근거만 내놓습니다.",
     ),
   );
   L.push(`${tr("Month phase", "월령 왕상휴수사")} (旺相休囚死): ${st.phase.hangul} ${st.phase.hanja} — ${tr(st.phase.en, st.phase.hangul)}`);
   L.push(`  득령 (${tr("month command", "월령")}): ${st.hasMonthCommand ? tr("yes", "예") : tr("no", "아니오")}`);
   L.push(`  득지 (${tr("rootedness/통근", "통근")}): ${st.hasRoot ? tr("yes", "예") : tr("no", "아니오")} — ${st.strongRoots} ${tr("strong root(s)", "강한 뿌리")}, ${st.resourceRoots} ${tr("resource root(s)", "인성 뿌리")}; ${tr("rooted in month branch", "월지 통근")}: ${st.rootedInMonthBranch ? tr("yes", "예") : tr("no", "아니오")}`);
-  L.push(`  득세 (${tr("allies", "세력")}): ${st.hasAllies ? tr("yes", "예") : tr("no", "아니오")} — ${tr("support", "생조")} ${st.supportCount} vs ${tr("drain", "설기")} ${st.drainCount}`);
+  L.push(`  득세 (${tr("allies", "세력")}): ${st.hasAllies ? tr("yes", "예") : tr("no", "아니오")} — ${tr("support", "생조")} ${st.supportCount} ${tr("vs", "대")} ${tr("drain", "설기")} ${st.drainCount}`);
   L.push(`  ${tr("인성 (resource) present", "인성 존재")}: ${st.resourcePresent ? tr("yes", "예") : tr("no", "아니오")} · ${tr("비겁 (companion) present", "비겁 존재")}: ${st.companionPresent ? tr("yes", "예") : tr("no", "아니오")}`);
   L.push("");
 
@@ -313,7 +313,7 @@ function buildChartText(r: SajuResult): string {
   L.push(
     tr(
       "These are chart FACTS for the reading to locate and interpret; the engine draws no conclusions from them. Only reliable stars are listed (the twelve 십이신살 + 효신살/괴강/양인); decorative label-stars are omitted.",
-      "이것들은 풀이가 찾아 읽어낼 사주의 사실입니다. 엔진은 여기서 결론을 내지 않습니다. 믿을 만한 신살만 적습니다 (십이신살 + 효신살·괴강·양인). 뜻이 얕은 이름살은 뺐습니다.",
+      "이것들은 풀이가 찾아 읽어낼 사주의 사실입니다. 계산기는 여기서 결론을 내지 않습니다. 믿을 만한 신살만 적습니다 (십이신살 + 효신살·괴강·양인). 뜻이 얕은 이름살은 뺐습니다.",
     ),
   );
   // 공망
@@ -566,7 +566,7 @@ function renderStrength(r: SajuResult): string {
     <h3><span class="h3-ko">${term("신강약", "singangyak")}</span><span class="h3-en">${tr("Strength Ingredients · Singangyak", "일간 강약의 근거")}</span></h3>
     <p class="el-note">${tr(
       `The <b>신강/신약 verdict is left to the reading</b>, not the calculator — weigh these ingredients in order: ${term("월지", "deukryeong")} command → ${term("인성", "sipseong")} resource → ${term("비겁", "sipseong")} companion. What the engine reports:`,
-      `<b>신강/신약 결론은 계산기가 아니라 풀이의 몫</b>입니다 — 근거를 ${term("월지", "deukryeong")} → ${term("인성", "sipseong")} → ${term("비겁", "sipseong")} 순으로 저울질하세요. 엔진이 제시하는 근거:`,
+      `<b>신강/신약 결론은 계산기가 아니라 풀이의 몫</b>입니다 — 근거를 ${term("월지", "deukryeong")} → ${term("인성", "sipseong")} → ${term("비겁", "sipseong")} 순으로 저울질하세요. 계산기가 내놓는 근거는 이렇습니다:`,
     )}</p>
     <div class="cond-row">
       ${chip(term("득령", "deukryeong"), tr("month command", "월령"), st.hasMonthCommand)}
@@ -575,7 +575,7 @@ function renderStrength(r: SajuResult): string {
     </div>
     <p class="el-note">${tr(
       `Month phase ${term("旺相休囚死", "deukryeong")}: <b>${st.phase.hangul} ${st.phase.hanja}</b> — ${esc(st.phase.en)}. Rooted in the month branch: <b>${st.rootedInMonthBranch ? "yes" : "no"}</b> (${st.strongRoots} strong root(s), ${st.resourceRoots} resource root(s)). 인성 resource present: <b>${st.resourcePresent ? "yes" : "no"}</b> · 비겁 companion present: <b>${st.companionPresent ? "yes" : "no"}</b>. Allies: support ${st.supportCount} vs drain ${st.drainCount}.`,
-      `월령 ${term("旺相休囚死", "deukryeong")}: <b>${st.phase.hangul} ${st.phase.hanja}</b>. 월지 통근: <b>${st.rootedInMonthBranch ? "예" : "아니오"}</b> (강근 ${st.strongRoots}, 인성근 ${st.resourceRoots}). 인성 존재: <b>${st.resourcePresent ? "예" : "아니오"}</b> · 비겁 존재: <b>${st.companionPresent ? "예" : "아니오"}</b>. 세력: 생조 ${st.supportCount} vs 설기 ${st.drainCount}.`,
+      `월령 ${term("旺相休囚死", "deukryeong")}: <b>${st.phase.hangul} ${st.phase.hanja}</b>. 월지 통근: <b>${st.rootedInMonthBranch ? "예" : "아니오"}</b> (강근 ${st.strongRoots}, 인성근 ${st.resourceRoots}). 인성 존재: <b>${st.resourcePresent ? "예" : "아니오"}</b> · 비겁 존재: <b>${st.companionPresent ? "예" : "아니오"}</b>. 세력: 생조 ${st.supportCount} 대 설기 ${st.drainCount}.`,
     )}</p>
 
     <h4 class="yong-head">${term("조후", "johu")} · ${tr("Climate Season", "조후 계절")} <span class="provisional-tag">${tr("default", "기본값")}</span></h4>
@@ -614,7 +614,7 @@ function renderDaeun(r: SajuResult): string {
     ${inner}
     <div class="inclusivity">${tr(
       `Each 10-year pillar layers over your natal chart. Yours run <b>${dir}</b> — a direction the classical system derives from your birth-year polarity together with the gender you chose; the start age comes from your birth's distance to the neighboring solar terms. This is one interpretive lens, not a fixed forecast — recompute with the other gender any time to compare.`,
-      `각 10년 기둥은 원국 위에 겹쳐집니다. 대운은 <b>${dir}</b>으로 흐릅니다 — 고전 체계가 태어난 해의 음양과 선택한 성별에 따라 정하는 방향이며, 시작 나이는 출생과 이웃한 절기 사이의 거리에서 나옵니다. 이것은 하나의 관점일 뿐 정해진 예언이 아니니, 언제든 다른 성별로 다시 계산해 비교해 보셔도 됩니다.`,
+      `각 10년 기둥은 타고난 사주(원국) 위에 겹쳐집니다. 대운은 <b>${dir}</b>으로 흐릅니다 — 태어난 해의 음양과 선택한 성별에 따라 방향이 정해지고, 시작 나이는 출생과 이웃한 절기 사이의 거리에서 나옵니다. 이것은 하나의 관점일 뿐 정해진 예언이 아니니, 언제든 다른 성별로 다시 계산해 비교해 보셔도 됩니다.`,
     )}</div>
   </section>`;
 }

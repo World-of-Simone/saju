@@ -166,6 +166,25 @@ function stemDesc(s: Stem): string {
   return `${s.hanja} (${s.hangul} · ${s.roman}), ${elName(s.element)}/${polName(s.polarity)}`;
 }
 
+/**
+ * 물상 (mulsang) — the classical natural IMAGE of each Day Master stem: a teaching handle for
+ * the day master's nature, never a verdict. The reading gives it meaning. Imagery follows the
+ * standard classical set.
+ */
+const STEM_IMAGE: Record<number, { en: string; ko: string }> = {
+  0: { en: "a great tree — timber that grows straight and tall", ko: "아름드리 큰 나무 — 곧게 뻗어 오르는 재목" },
+  1: { en: "grass and flowers — soft, living, bending to grow", ko: "풀과 꽃 — 부드럽게 휘며 살아나는 생명" },
+  2: { en: "the sun — open warmth that shines on everything", ko: "태양 — 온 세상을 비추는 활짝 열린 온기" },
+  3: { en: "a candle flame — focused, intimate, tended light", ko: "촛불 — 곁을 밝히는 다정하고 집중된 불빛" },
+  4: { en: "a mountain — vast, steady, unmoved earth", ko: "큰 산 — 넓고 흔들림 없는 굳건한 대지" },
+  5: { en: "garden soil — a nurturing field that grows things", ko: "밭흙 — 만물을 길러내는 촉촉한 텃밭" },
+  6: { en: "raw metal — iron, an axe, unrefined strength", ko: "무쇠 — 도끼처럼 아직 다듬지 않은 강한 쇠" },
+  7: { en: "a jewel — refined, precise, finished metal", ko: "보석 — 정교하게 다듬어진 빛나는 금속" },
+  8: { en: "the ocean — deep, wide, moving water", ko: "바다 — 깊고 넓게 흐르는 큰 물" },
+  9: { en: "rain and dew — gentle water that quietly soaks in", ko: "비와 이슬 — 조용히 스며드는 부드러운 물" },
+};
+const stemImage = (s: Stem) => STEM_IMAGE[s.index]!;
+
 function pillarText(label: string, ko: string, p: Pillar, tg: PillarTenGods, isDay: boolean): string {
   const gz = `${p.stem.hanja}${p.branch.hanja} (${p.stem.hangul}${p.branch.hangul} · ${p.stem.roman}-${p.branch.roman})`;
   const godLabel = (info: { en: string; hangul: string }) =>
@@ -206,8 +225,6 @@ function daeunText(d: DaeunResult): string {
 
 function buildChartText(r: SajuResult): string {
   const inp = r.input;
-  const e = r.elements;
-  const order: Element[] = ["wood", "fire", "earth", "metal", "water"];
 
   const bd = `${inp.year}-${pad2(inp.month)}-${pad2(inp.day)}`;
   const known = inp.hasBirthTime !== false;
@@ -252,6 +269,7 @@ function buildChartText(r: SajuResult): string {
     ),
   );
   L.push(`${tr("Day Master", "일간")}: ${stemDesc(r.dayMaster)}`);
+  L.push(`${tr("Day Master image (물상)", "일간 물상 (物象)")}: ${tr(stemImage(r.dayMaster).en, stemImage(r.dayMaster).ko)}`);
   L.push("");
   L.push(pillarText(tr("YEAR ", "연주"), "연주", r.pillars.year, r.tenGods.year, false));
   L.push(pillarText(tr("MONTH", "월주"), "월주", r.pillars.month, r.tenGods.month, false));
@@ -261,37 +279,6 @@ function buildChartText(r: SajuResult): string {
   } else {
     L.push(tr("HOUR  (시주): unknown — birth time not provided.", "시주: 모름 — 태어난 시각이 제공되지 않음."));
   }
-  L.push("");
-
-  L.push(tr("── FIVE ELEMENTS (오행) ──", "── 오행 (五行) ──"));
-  L.push(
-    tr(
-      "The count is the VISIBLE eight characters only (stems + branch elements); hidden stems are deliberately excluded from it.",
-      "드러난 여덟 글자(천간 + 지지 오행)만 셉니다. 지장간은 일부러 넣지 않습니다.",
-    ),
-  );
-  L.push(tr("Count (8 characters): ", "여덟 글자 집계: ") + order.map((m) => `${elName(m)} ${e.visible[m]}`).join(" · "));
-  L.push(`${tr("Strongest", "가장 강함")}: ${elName(e.strongest)} · ${tr("Weakest", "가장 약함")}: ${elName(e.weakest)}`);
-  L.push(
-    e.missing.length
-      ? `${tr("Missing (absent from the eight characters)", "없음 (여덟 글자에 드러나지 않음)")}: ${e.missing.map((m) => elName(m)).join(", ")}${tr(" — often the most telling part of a reading.", " — 오히려 이 빠진 오행이 가장 많은 것을 말해 주기도 합니다.")}`
-      : tr("All five elements are represented.", "다섯 오행이 모두 나타납니다."),
-  );
-  L.push("");
-
-  const st = r.strength;
-  L.push(tr("── DAY MASTER STRENGTH INGREDIENTS (신강약 근거) ──", "── 신강약 근거 (身强弱) ──"));
-  L.push(
-    tr(
-      "The 신강/신약 VERDICT is left to the reading (weigh these in order: 월지 command → 인성 resource → 비겁 companion). The engine reports only the ingredients.",
-      "신강/신약 결론은 풀이의 몫입니다 (월지 → 인성 → 비겁 순으로 저울질). 계산기는 근거만 내놓습니다.",
-    ),
-  );
-  L.push(`${tr("Month phase", "월령 왕상휴수사")} (旺相休囚死): ${st.phase.hangul} ${st.phase.hanja} — ${tr(st.phase.en, st.phase.hangul)}`);
-  L.push(`  득령 (${tr("month command", "월령")}): ${st.hasMonthCommand ? tr("yes", "예") : tr("no", "아니오")}`);
-  L.push(`  득지 (${tr("rootedness/통근", "통근")}): ${st.hasRoot ? tr("yes", "예") : tr("no", "아니오")} — ${st.strongRoots} ${tr("strong root(s)", "강한 뿌리")}, ${st.resourceRoots} ${tr("resource root(s)", "인성 뿌리")}; ${tr("rooted in month branch", "월지 통근")}: ${st.rootedInMonthBranch ? tr("yes", "예") : tr("no", "아니오")}`);
-  L.push(`  득세 (${tr("allies", "세력")}): ${st.hasAllies ? tr("yes", "예") : tr("no", "아니오")} — ${tr("support", "생조")} ${st.supportCount} ${tr("vs", "대")} ${tr("drain", "설기")} ${st.drainCount}`);
-  L.push(`  ${tr("인성 (resource) present", "인성 존재")}: ${st.resourcePresent ? tr("yes", "예") : tr("no", "아니오")} · ${tr("비겁 (companion) present", "비겁 존재")}: ${st.companionPresent ? tr("yes", "예") : tr("no", "아니오")}`);
   L.push("");
 
   const j = r.johuSeason;
@@ -491,8 +478,30 @@ function renderPillars(r: SajuResult): string {
   const dayCard = pillarCard("Day", "일주", P.day, T.day, true);
   const monthCard = pillarCard("Month", "월주", P.month, T.month, false);
   const yearCard = pillarCard("Year", "연주", P.year, T.year, false);
+  const dm = r.dayMaster;
+  const img = tr(stemImage(dm).en, stemImage(dm).ko);
+  const j = r.johuSeason;
+  const seasonVal =
+    tr(`${j.en} (${j.hangul}/${j.hanja})`, `${j.hangul} (${j.hanja})`) +
+    (j.seasonOpener
+      ? tr(
+          ` — a 生地 opener, read back one season as the climate lags`,
+          ` — 生地 시작월이라 기후가 한 계절 뒤로 읽힙니다`,
+        )
+      : "");
+  const face = `<div class="chart-face">
+    <div class="face-item">
+      <span class="face-k">${tr("Day Master image", "일간 물상")} <small>${tr("물상 · 物象", "物象")}</small></span>
+      <span class="face-v"><b class="${elClass(dm.element)}">${dm.hanja} ${dm.hangul}</b> — ${img}</span>
+    </div>
+    <div class="face-item">
+      <span class="face-k">${tr("Climate season", "조후 계절")} <small>${tr("조후 · 調候", "調候")}</small></span>
+      <span class="face-v">${seasonVal}</span>
+    </div>
+  </div>`;
   return `<section class="card result-section">
     <h3><span class="h3-ko">${term("사주", "saju")}</span><span class="h3-en">${tr("Four Pillars · Saju", "네 기둥")}</span></h3>
+    ${face}
     <div class="pillars">${hourCard}${dayCard}${monthCard}${yearCard}</div>
     <p class="el-note">${tr(
       `Read right→left (Year → Hour). The highlighted <b>Day Master</b> (${term("일간", "ilgan")}) is “you”; every ${term("Ten God", "sipseong")} label describes how that character relates to you.`,
@@ -553,37 +562,6 @@ function renderElements(r: SajuResult): string {
       `<b>드러난 여덟 글자</b>만 셉니다 — ${term("지장간", "jijanggan")}은 일부러 넣지 않습니다. 가장 강한 오행: <b class="${elClass(e.strongest)}">${elName(e.strongest)}</b> · 가장 약한 오행: <b class="${elClass(e.weakest)}">${elName(e.weakest)}</b>.`,
     )}</p>
     ${missing}
-  </section>`;
-}
-
-function renderStrength(r: SajuResult): string {
-  const st = r.strength;
-  const j = r.johuSeason;
-  const chip = (ko: string, en: string, ok: boolean) =>
-    `<span class="cond ${ok ? "cond-yes" : "cond-no"}">${ko} <small>${en}</small> ${ok ? "✓" : "✕"}</span>`;
-
-  return `<section class="card result-section">
-    <h3><span class="h3-ko">${term("신강약", "singangyak")}</span><span class="h3-en">${tr("Strength Ingredients · Singangyak", "일간 강약의 근거")}</span></h3>
-    <p class="el-note">${tr(
-      `The <b>신강/신약 verdict is left to the reading</b>, not the calculator — weigh these ingredients in order: ${term("월지", "deukryeong")} command → ${term("인성", "sipseong")} resource → ${term("비겁", "sipseong")} companion. What the engine reports:`,
-      `<b>신강/신약 결론은 계산기가 아니라 풀이의 몫</b>입니다 — 근거를 ${term("월지", "deukryeong")} → ${term("인성", "sipseong")} → ${term("비겁", "sipseong")} 순으로 저울질하세요. 계산기가 내놓는 근거는 이렇습니다:`,
-    )}</p>
-    <div class="cond-row">
-      ${chip(term("득령", "deukryeong"), tr("month command", "월령"), st.hasMonthCommand)}
-      ${chip(term("득지", "tongeun"), tr("rootedness", "통근"), st.hasRoot)}
-      ${chip("득세", tr("allies", "세력"), st.hasAllies)}
-    </div>
-    <p class="el-note">${tr(
-      `Month phase ${term("旺相休囚死", "deukryeong")}: <b>${st.phase.hangul} ${st.phase.hanja}</b> — ${esc(st.phase.en)}. Rooted in the month branch: <b>${st.rootedInMonthBranch ? "yes" : "no"}</b> (${st.strongRoots} strong root(s), ${st.resourceRoots} resource root(s)). 인성 resource present: <b>${st.resourcePresent ? "yes" : "no"}</b> · 비겁 companion present: <b>${st.companionPresent ? "yes" : "no"}</b>. Allies: support ${st.supportCount} vs drain ${st.drainCount}.`,
-      `월령 ${term("旺相休囚死", "deukryeong")}: <b>${st.phase.hangul} ${st.phase.hanja}</b>. 월지 통근: <b>${st.rootedInMonthBranch ? "예" : "아니오"}</b> (강근 ${st.strongRoots}, 인성근 ${st.resourceRoots}). 인성 존재: <b>${st.resourcePresent ? "예" : "아니오"}</b> · 비겁 존재: <b>${st.companionPresent ? "예" : "아니오"}</b>. 세력: 생조 ${st.supportCount} 대 설기 ${st.drainCount}.`,
-    )}</p>
-
-    <h4 class="yong-head">${term("조후", "johu")} · ${tr("Climate Season", "조후 계절")} <span class="provisional-tag">${tr("default", "기본값")}</span></h4>
-    <p class="el-note">${tr(
-      `A labeled, overridable default read from the ${term("월지", "deukryeong")} (month branch). This is <b>not a ${term("용신", "yongsin")}</b> — the useful god is interpretive and school-dependent, and the calculator deliberately does not emit one.`,
-      `${term("월지", "deukryeong")}에서 읽어낸 기본값으로, 얼마든지 바꿔도 됩니다. 이것은 <b>${term("용신", "yongsin")}이 아닙니다</b> — 용신은 해석의 영역이자 유파마다 달라 계산기가 정하지 않습니다.`,
-    )}</p>
-    <p class="strength-verdict">${tr("Season", "계절")}: <b>${tr(j.en, j.hangul)}</b> <span class="el-note" style="font-weight:400">(${j.hangul}/${j.hanja} — ${tr("from the", "월지")} <b>${j.monthBranchHanja}</b> ${tr("month branch", "기준")}${j.seasonOpener ? tr("; a 生地 opener read back one season as the climate lags the calendar", "; 生地 시작월 — 기후가 절기보다 늦어 한 계절 뒤로 읽음") : ""})</span></p>
   </section>`;
 }
 
@@ -747,7 +725,6 @@ function render(r: SajuResult) {
     renderPillars(r) +
     renderTST(r) +
     renderElements(r) +
-    renderStrength(r) +
     renderRelations(r) +
     renderDaeun(r);
   out.scrollIntoView({ behavior: "smooth", block: "nearest" });

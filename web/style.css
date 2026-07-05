@@ -360,6 +360,24 @@ input:focus { outline: none; border-bottom-color: var(--accent); }
 }
 @media (max-width: 520px) { .yong-grid { grid-template-columns: 1fr; } }
 
+/* ---------- chart face (일간 물상 · 조후 계절) ---------- */
+.chart-face {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;
+  margin: 0.2rem 0 1rem;
+}
+.face-item {
+  border: 1px solid var(--line-soft); border-radius: 0;
+  padding: 0.7rem 0.85rem; background: var(--paper-2);
+}
+.face-k {
+  display: block; font-family: var(--font-display);
+  font-size: 0.8rem; font-weight: 700; color: var(--green); margin-bottom: 0.35rem;
+}
+.face-k small { font-weight: 400; color: var(--ink-soft); font-family: var(--font-cjk); }
+.face-v { font-size: 0.95rem; line-height: 1.5; }
+.face-v b { font-family: var(--font-cjk); font-size: 1.05rem; }
+@media (max-width: 520px) { .chart-face { grid-template-columns: 1fr; } }
+
 /* ---------- relations (공망 · 신살 · 지지관계) ---------- */
 .rel-list { display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.4rem; }
 .rel-row {

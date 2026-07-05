@@ -69,7 +69,7 @@ const STATIC: Record<Lang, Record<string, string>> = {
       "Saju is an interpretive art, a way of contemplating life — not a deterministic prediction or a fixed verdict about who you are.",
     f_submit: "Cast my chart",
     footer_credit:
-      "This tool was built by Simone Grace Seol, under the supervision of her mother-in-law, Master Kim H.K. — a Saju practitioner with three decades of experience, who is certified in five classical disciplines, and appointed to the central academic committee of Korea's scholarly society for fate studies. Our family's wish is that what you find here helps you know yourself, live well, and do good in the world.",
+      "This tool was built by Simone Grace Seol, under the supervision of her mother-in-law, Master Kim — a Saju practitioner with three decades of experience, who is certified in five classical disciplines, and appointed to the central academic committee of Korea's scholarly society for fate studies. Our family's wish is that what you find here helps you know yourself, live well, and do good in the world.",
     footer_geonames:
       'City data © <a href="https://www.geonames.org/" target="_blank" rel="noopener noreferrer">GeoNames</a>, licensed under CC BY 4.0.',
   },
@@ -92,7 +92,7 @@ const STATIC: Record<Lang, Record<string, string>> = {
       "사주는 삶을 돌아보게 하는 해석의 예술입니다. 앞날을 못박는 예언도, 어떤 사람인지 재단하는 판결도 아닙니다.",
     f_submit: "내 사주 뽑기",
     footer_credit:
-      "이 도구는 시몬 그레이스 설이 시어머니 김희경 선생님의 감수를 받아 만들었습니다. 김 선생님은 30년 경력의 사주 명리 전문가로, 다섯 가지 고전 분야의 자격을 갖추셨으며, 한국 명리학 학회의 중앙 학술 위원으로 위촉되셨습니다. 이곳에서 얻은 것이 스스로를 이해하고, 잘 살아가며, 세상에 선을 더하는 데 보탬이 되기를 저희 가족은 바랍니다.",
+      "이 도구는 시몬 그레이스 설이 시어머니 김선생님의 감수를 받아 만들었습니다. 김 선생님은 30년 경력의 사주 명리 전문가로, 다섯 가지 고전 분야의 자격을 갖추셨으며, 한국 명리학 학회의 중앙 학술 위원으로 위촉되셨습니다. 이곳에서 얻은 것이 스스로를 이해하고, 잘 살아가며, 세상에 선을 더하는 데 보탬이 되기를 저희 가족은 바랍니다.",
     footer_geonames:
       '도시 데이터 © <a href="https://www.geonames.org/" target="_blank" rel="noopener noreferrer">GeoNames</a>, CC BY 4.0 라이선스.',
   },

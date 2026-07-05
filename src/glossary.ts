@@ -213,9 +213,9 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
     hanja: "神殺",
     en: "Spirit Stars",
     explain:
-      "Named markers layered onto the chart. This calculator shows only the reliable ones — the twelve 십이신살 (read from your year branch) plus 효신살, 괴강, and 양인 — and deliberately omits the many decorative 'label' stars whose meaning is thin or contested.",
+      "Named markers layered onto the chart. This calculator shows only the reliable ones — the twelve 십이신살 (read from your day branch) plus 효신살, 괴강, and 양인 — and deliberately omits the many decorative 'label' stars whose meaning is thin or contested.",
     explainKo:
-      "사주에 덧입혀 읽는 이름 붙은 기운입니다. 이 도구는 믿을 만한 것만 보여 줍니다 — 십이신살(연지 기준)과 효신살·괴강·양인. 뜻이 얕거나 논란이 많은 이름살은 일부러 뺐습니다.",
+      "사주에 덧입혀 읽는 이름 붙은 기운입니다. 이 도구는 믿을 만한 것만 보여 줍니다 — 십이신살(일지 기준)과 효신살·괴강·양인. 뜻이 얕거나 논란이 많은 이름살은 일부러 뺐습니다.",
   },
   samhap: {
     term: "samhap",

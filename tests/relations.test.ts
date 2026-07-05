@@ -55,16 +55,30 @@ describe("공망 (void)", () => {
   });
 });
 
-describe("십이신살 (from the year branch)", () => {
-  it("maps 午-year palaces to 장성/역마/화개/도화", () => {
-    // year 午 → fire group 寅午戌, 生地 寅. 午=장성, 申=역마, 戌=화개, 卯=년살(도화).
+describe("십이신살 (from the day branch)", () => {
+  it("maps palaces off the DAY branch's 삼합 group (day 戌 → fire group 寅午戌, 生地 寅)", () => {
+    // day 戌 → fire group 寅午戌, 生地 寅. 午=장성, 申=역마, 戌=화개, 卯=년살(도화).
     const chart = mkChart([0, 6], [0, 8], [0, 10], [1, 3]); // 甲午 甲申 甲戌 乙卯
     const s = computeSinsal(chart);
+    expect(s.reference.pos).toBe("day");
     const byPos = Object.fromEntries(s.twelve.map((t) => [t.at.pos, t.hangul]));
     expect(byPos.year).toBe("장성살");
     expect(byPos.month).toBe("역마살");
     expect(byPos.day).toBe("화개살");
     expect(byPos.hour).toBe("년살");
+  });
+
+  it("anchors on the DAY branch, not the year branch (丙寅/庚寅/庚子/丁亥)", () => {
+    // day master 庚, day branch 子 → 申子辰 group. Chart branches 寅 寅 子 亥.
+    // 子=장성살, 寅=역마살, 亥=망신살. (Under a year-branch anchor on 寅 it would be neither.)
+    const chart = mkChart([2, 2], [6, 2], [6, 0], [3, 11]); // 丙寅 庚寅 庚子 丁亥
+    const s = computeSinsal(chart);
+    expect(s.reference.pos).toBe("day");
+    const byPos = Object.fromEntries(s.twelve.map((t) => [t.at.pos, t.hangul]));
+    expect(byPos.day).toBe("장성살"); // 子
+    expect(byPos.year).toBe("역마살"); // 寅
+    expect(byPos.month).toBe("역마살"); // 寅
+    expect(byPos.hour).toBe("망신살"); // 亥
   });
 });
 

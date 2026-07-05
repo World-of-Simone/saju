@@ -10,8 +10,8 @@
  *
  * The engine SURFACES these as facts; every interpretive call (what a void/clash/star MEANS in this
  * chart) stays with the reading layer. Two conventions worth flagging for Master Kim:
- *   - 십이신살 are computed from the YEAR branch (년지) as the canonical reference. Some schools also
- *     read them from the day branch (일지); we expose the reference used so the choice is explicit.
+ *   - 십이신살 are computed from the DAY branch (일지) as the reference. Some schools instead read
+ *     them from the year branch (년지); we expose the reference used so the choice is explicit.
  *   - 괴강 is checked on the day pillar and reported on any pillar it also appears in.
  */
 import { BRANCHES, STEMS } from "./constants.js";
@@ -235,7 +235,7 @@ const GWAEGANG = new Set([16, 46, 28, 34]);
 const YANGIN_BRANCH: Record<number, number> = { 0: 3, 2: 6, 4: 6, 6: 9, 8: 0 }; // 甲→卯 丙→午 戊→午 庚→酉 壬→子
 
 export interface SinsalResult {
-  /** Reference branch the 십이신살 were read from (canonical = year branch). */
+  /** Reference branch the 십이신살 were read from (day branch). */
   reference: { pos: PillarPos; hangul: string; hanja: string };
   /** Twelve-star hits present in the chart, located on their palace. */
   twelve: SinsalHit[];
@@ -251,8 +251,8 @@ export function computeSinsal(pillars: FourPillars): SinsalResult {
   const ps = palaces(pillars);
   const dm = pillars.day.stem;
 
-  // 십이신살, read from the year branch's 삼합 group.
-  const refBranch = pillars.year.branch.index;
+  // 십이신살, read from the day branch's 삼합 group.
+  const refBranch = pillars.day.branch.index;
   const birth = BIRTH_BRANCH_BY_MOD4[refBranch % 4]!;
   const twelve: SinsalHit[] = [];
   for (const p of ps) {
@@ -301,9 +301,9 @@ export function computeSinsal(pillars: FourPillars): SinsalResult {
 
   return {
     reference: {
-      pos: "year",
-      hangul: pillars.year.branch.hangul,
-      hanja: pillars.year.branch.hanja,
+      pos: "day",
+      hangul: pillars.day.branch.hangul,
+      hanja: pillars.day.branch.hanja,
     },
     twelve,
     hyosin,

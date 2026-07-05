@@ -315,7 +315,7 @@ function buildChartText(r: SajuResult): string {
   );
   // 십이신살 per palace
   L.push(
-    `${tr("Twelve stars (십이신살, from year branch)", "십이신살 (연지 기준)")}: ` +
+    `${tr("Twelve stars (십이신살, from day branch)", "십이신살 (일지 기준)")}: ` +
       rel.sinsal.twelve.map((t) => `${tr(POS_LABEL.en[t.at.pos], POS_LABEL.ko[t.at.pos])}=${t.hangul}(${t.hanja})`).join(" · "),
   );
   // special stars
@@ -691,8 +691,8 @@ function renderRelations(r: SajuResult): string {
     <p class="el-note">${voidHits}</p>
 
     <h4 class="yong-head">${term("십이신살", "sinsal")} · ${tr("Twelve Stars", "십이신살")} <span class="provisional-tag">${tr(
-      "from 연지",
-      "연지 기준",
+      "from 일지",
+      "일지 기준",
     )}</span></h4>
     <div class="rel-list">${twelveRows}</div>
 

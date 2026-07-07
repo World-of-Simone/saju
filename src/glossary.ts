@@ -133,9 +133,9 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
     hanja: "子時",
     en: "Zi Hour",
     explain:
-      "The 2-hour period spanning 23:00–01:00. Because it straddles midnight, births at 23:00–24:00 (야자시) keep the current day's Day Pillar while 00:00–01:00 (조자시) uses the next day.",
+      "The first two-hour branch of the day, spanning 23:00–01:00. This calculator rolls the whole day at 23:00: from 11pm the Day Pillar advances to the next day and the branches restart at 子 — no 야자시/조자시 split. So a birth at 23:30 is read as the next day's 자시.",
     explainKo:
-      "밤 11시부터 새벽 1시까지의 두 시간입니다. 자정을 걸치므로, 23~24시(야자시)는 그날의 일주를 그대로 쓰고 0~1시(조자시)는 다음 날 일주를 씁니다.",
+      "하루의 첫 두 시간, 밤 11시부터 새벽 1시까지입니다. 이 계산기는 밤 11시에 하루를 통째로 넘깁니다. 11시부터는 일주가 다음 날로 바뀌고 지지는 子로 다시 시작합니다 — 야자시·조자시를 나누지 않습니다. 그래서 밤 11시 반에 태어나면 다음 날 자시로 봅니다.",
   },
   singangyak: {
     term: "singangyak",

@@ -307,7 +307,6 @@ export default {
     }
 
     const chart = String(body?.chart ?? "").trim();
-    const lang = body?.lang === "ko" ? "ko" : "en";
     if (!chart) {
       return new Response("Missing chart", { status: 400, headers: cors });
     }
@@ -324,11 +323,7 @@ export default {
       );
     }
 
-    const userMessage =
-      `Here is the person's Saju chart, already computed from their birth details. ` +
-      `Every fact below is authoritative — read it, do not recompute it.\n\n` +
-      `<chart>\n${chart}\n</chart>\n\n` +
-      `Write the reading in ${lang === "ko" ? "Korean" : "English"}.`;
+    const userMessage = chart;
 
     const upstream = await fetch(ANTHROPIC_URL, {
       method: "POST",

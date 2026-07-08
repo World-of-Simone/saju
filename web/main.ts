@@ -13,7 +13,6 @@ import {
 import type { Pillar } from "../dist/pillars.js";
 import type { PillarTenGods, TenGodLabel } from "../dist/analysis.js";
 import type { DaeunResult } from "../dist/daeun.js";
-import { Clerk } from "@clerk/clerk-js";
 
 // ---------- tiny DOM helpers ----------
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
@@ -419,18 +418,18 @@ async function readChart(): Promise<void> {
   if (!outEl || readingInFlight) return;
 
   // Gate behind sign-in. If Clerk is still warming up, ask them to retry in a moment.
-  if (!clerkReady) {
+  if (!clerkReady || !clerk) {
     setReadingStatus(tr("Just a moment — still loading…", "잠시만요 — 불러오는 중…"));
     return;
   }
   if (!clerk.user) {
-    clerk.openSignIn();
+    goToSignIn();
     return;
   }
 
   const token = await clerk.session?.getToken();
   if (!token) {
-    clerk.openSignIn();
+    goToSignIn();
     return;
   }
 
@@ -501,30 +500,77 @@ document.addEventListener("click", (e) => {
 });
 
 // ---------- Clerk auth (email verification code) ----------
-const CLERK_PUBLISHABLE_KEY = "pk_test_ZW5vdWdoLWRhbmUtNTAuY2xlcmsuYWNjb3VudHMuZGV2JA";
-const clerk = new Clerk(CLERK_PUBLISHABLE_KEY);
+// Clerk is loaded from its CDN via the <script> tag in index.html (that build includes the prebuilt
+// sign-in UI, which the npm bundle does not). We wait for window.Clerk, call load(), then use it.
+interface ClerkUser {
+  id: string;
+  primaryEmailAddress?: { emailAddress?: string } | null;
+}
+interface ClerkGlobal {
+  loaded: boolean;
+  user: ClerkUser | null;
+  session: { getToken(): Promise<string | null> } | null;
+  load(): Promise<void>;
+  buildSignInUrl(): string;
+  signOut(): Promise<void>;
+  addListener(cb: () => void): void;
+}
+let clerk: ClerkGlobal | null = null;
 let clerkReady = false;
+
+/** Send the browser to Clerk's hosted sign-in page (email verification code). */
+function goToSignIn(): void {
+  const url = clerk?.buildSignInUrl();
+  if (url) window.location.href = url;
+}
+
+/** Resolve once the Clerk CDN script has defined window.Clerk. */
+function waitForClerk(): Promise<ClerkGlobal> {
+  return new Promise((resolve) => {
+    const get = () => (window as unknown as { Clerk?: ClerkGlobal }).Clerk;
+    const existing = get();
+    if (existing) return resolve(existing);
+    const timer = setInterval(() => {
+      const c = get();
+      if (c) {
+        clearInterval(timer);
+        resolve(c);
+      }
+    }, 50);
+  });
+}
 
 function renderAuthSlot(): void {
   const slot = document.getElementById("auth-slot");
-  if (!slot) return;
+  if (!slot || !clerk) return;
   slot.innerHTML = "";
   if (clerk.user) {
-    const holder = document.createElement("div");
-    slot.appendChild(holder);
-    clerk.mountUserButton(holder, { afterSignOutUrl: location.pathname });
+    const email = clerk.user.primaryEmailAddress?.emailAddress;
+    if (email) {
+      const label = document.createElement("span");
+      label.className = "auth-email";
+      label.textContent = email;
+      slot.appendChild(label);
+    }
+    const out = document.createElement("button");
+    out.type = "button";
+    out.className = "auth-signin-btn";
+    out.textContent = tr("Sign out", "로그아웃");
+    out.addEventListener("click", () => void clerk?.signOut());
+    slot.appendChild(out);
   } else {
     const b = document.createElement("button");
     b.type = "button";
     b.className = "auth-signin-btn";
     b.textContent = tr("Sign in", "로그인");
-    b.addEventListener("click", () => clerk.openSignIn());
+    b.addEventListener("click", () => goToSignIn());
     slot.appendChild(b);
   }
 }
 
 async function initClerk(): Promise<void> {
   try {
+    clerk = await waitForClerk();
     await clerk.load();
     clerkReady = true;
     renderAuthSlot();

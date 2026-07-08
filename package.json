@@ -22,7 +22,6 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@clerk/clerk-js": "^6.25.0",
     "luxon": "^3.5.0"
   },
   "devDependencies": {

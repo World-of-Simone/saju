@@ -49,39 +49,7 @@ body {
 
 .page { position: relative; max-width: 1080px; margin: 0 auto; padding: 3rem 1.25rem 4.5rem; }
 
-/* ---- Language toggle (top-right pill on the dark canvas) ---- */
-.lang-toggle {
-  position: absolute;
-  top: 1.25rem;
-  right: 1.25rem;
-  display: inline-flex;
-  gap: 2px;
-  padding: 3px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: #fff;
-  z-index: 5;
-}
-.lang-btn {
-  font-family: var(--font-sans);
-  font-size: 0.82rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  padding: 0.32rem 0.85rem;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--ink-soft);
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-.lang-btn:hover { color: var(--ink); }
-.lang-btn.active {
-  background: var(--ink);
-  color: #fff;
-}
-
-/* ---- Top bar: site navigation + language toggle ---- */
+/* ---- Top bar: site navigation ---- */
 .topbar {
   display: flex;
   align-items: center;
@@ -90,8 +58,6 @@ body {
   flex-wrap: wrap;
   margin-bottom: 2.5rem;
 }
-/* In the top bar the toggle sits in normal flow, not pinned to the corner. */
-.topbar .lang-toggle { position: static; top: auto; right: auto; }
 .topbar-right { display: inline-flex; align-items: center; gap: 0.75rem; }
 .auth-slot { display: inline-flex; align-items: center; min-height: 32px; }
 .auth-signin-btn {

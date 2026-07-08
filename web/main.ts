@@ -27,11 +27,14 @@ function term(text: string, key: string): string {
   return `<span class="term" data-term="${key}">${esc(text)}</span>`;
 }
 
-// ---------- i18n (crude first pass; Korean copy to be refined later) ----------
+// ---------- i18n ----------
+// The interface is English-only. `lang` stays as a fixed constant so the chart still shows the
+// Korean Saju terms that are baked into the English copy (e.g. "Five Elements 오행"), while every
+// interface string resolves to English.
 export type Lang = "en" | "ko";
-let lang: Lang = localStorage.getItem("saju-lang") === "ko" ? "ko" : "en";
-/** Pick the string for the active language. */
-const tr = (en: string, ko: string) => (lang === "ko" ? ko : en);
+const lang: Lang = "en";
+/** Pick the string for the active language. Always English. */
+const tr = (en: string, _ko: string) => en;
 
 const ELEMENT_LABEL: Record<Lang, Record<Element, string>> = {
   en: { wood: "Wood", fire: "Fire", earth: "Earth", metal: "Metal", water: "Water" },
@@ -821,10 +824,7 @@ function renderWarnings(r: SajuResult): string {
   return `<section class="result-section"><ul class="warnings">${items}</ul></section>`;
 }
 
-// Remember the last computed chart so a language switch can re-render it.
-let lastResult: SajuResult | null = null;
 function render(r: SajuResult) {
-  lastResult = r;
   currentChartText = buildChartText(r);
   const out = $("#results");
   out.innerHTML =
@@ -837,28 +837,6 @@ function render(r: SajuResult) {
     readPanel();
   out.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
-
-// ---------- language toggle ----------
-function syncLangButtons() {
-  document.querySelectorAll<HTMLElement>(".lang-btn").forEach((b) => {
-    b.classList.toggle("active", b.dataset.lang === lang);
-    b.setAttribute("aria-pressed", String(b.dataset.lang === lang));
-  });
-}
-
-function setLang(next: Lang) {
-  if (next === lang) return;
-  lang = next;
-  localStorage.setItem("saju-lang", next);
-  applyStaticI18n();
-  syncLangButtons();
-  renderAuthSlot(); // "Sign in" button label follows the language
-  if (lastResult) render(lastResult); // re-render results in the new language
-}
-
-document.querySelectorAll<HTMLButtonElement>(".lang-btn").forEach((b) => {
-  b.addEventListener("click", () => setLang(b.dataset.lang as Lang));
-});
 
 // ---------- page navigation (Cast Your Chart / Our Story & Ethics) ----------
 type View = "chart" | "story";
@@ -885,9 +863,8 @@ window.addEventListener("hashchange", () => {
   showView(location.hash === "#story" ? "story" : "chart");
 });
 
-// Apply the persisted language to the static page on first load.
+// Fill the static page copy (English) on first load.
 applyStaticI18n();
-syncLangButtons();
 showView(location.hash === "#story" ? "story" : "chart");
 
 // ---------- form submit ----------

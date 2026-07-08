@@ -81,6 +81,73 @@ body {
   color: #fff;
 }
 
+/* ---- Top bar: site navigation + language toggle ---- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2.5rem;
+}
+/* In the top bar the toggle sits in normal flow, not pinned to the corner. */
+.topbar .lang-toggle { position: static; top: auto; right: auto; }
+.topbar-right { display: inline-flex; align-items: center; gap: 0.75rem; }
+.auth-slot { display: inline-flex; align-items: center; min-height: 32px; }
+.auth-signin-btn {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  cursor: pointer;
+}
+.auth-signin-btn:hover { background: transparent; color: var(--ink); }
+.site-nav { display: inline-flex; gap: 0.4rem; flex-wrap: wrap; }
+.nav-btn {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 0.5rem 1.05rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.nav-btn:hover { color: var(--ink); border-color: var(--ink-soft); }
+.nav-btn.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+.view[hidden] { display: none; }
+
+/* ---- Our Story & Ethics ---- */
+.story { max-width: 68ch; margin: 0 auto; padding: 0.5rem 0 1.5rem; color: var(--ink); }
+.story h1 {
+  font-family: var(--font-title);
+  font-size: clamp(2rem, 4.8vw, 3.1rem);
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  margin: 0 0 1.6rem;
+}
+.story h2 {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  margin: 2.6rem 0 0.85rem;
+  color: var(--ink);
+}
+.story p {
+  font-size: 1.05rem;
+  line-height: 1.78;
+  margin: 0 0 1.15rem;
+  color: #262626;
+}
+
 /* ---- Hero (clean white → black ink) ---- */
 .hero { text-align: center; margin-bottom: 2.75rem; color: var(--ink); }
 .hero h1 {
@@ -327,6 +394,34 @@ input:focus { outline: none; border-bottom-color: var(--accent); }
 .copy-btn:active { transform: translateY(1px); }
 .copy-status { font-size: 0.85rem; color: var(--ink-soft); margin: 0.6rem 0 0; min-height: 1.1em; }
 .copy-status.ok { color: var(--wood); font-weight: 700; }
+
+/* Read my chart */
+.reading-card { display: flex; flex-direction: column; }
+.read-btn {
+  align-self: flex-start;
+  margin-top: 0.9rem;
+  font-family: var(--font-serif);
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--paper-hi);
+  background: var(--green);
+  border: 2px solid var(--green);
+  border-radius: 0;
+  padding: 0.75rem 1.4rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.06s ease;
+}
+.read-btn:hover { background: var(--paper-hi); color: var(--green); }
+.read-btn:active { transform: translateY(1px); }
+.read-btn:disabled { opacity: 0.55; cursor: default; transform: none; }
+.reading-output {
+  white-space: pre-wrap;
+  line-height: 1.7;
+  margin-top: 0.6rem;
+  color: var(--ink);
+}
+.reading-output:empty { margin-top: 0; }
 
 /* Day Master strength & 용신 */
 .strength-verdict { font-size: 1.1rem; margin: 0.2rem 0 0.85rem; }

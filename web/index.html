@@ -14,10 +14,21 @@
   </head>
   <body>
     <div class="page">
-      <div class="lang-toggle" role="group" aria-label="Language">
-        <button type="button" class="lang-btn" data-lang="en">EN</button>
-        <button type="button" class="lang-btn" data-lang="ko">한국어</button>
+      <div class="topbar">
+        <nav class="site-nav" aria-label="Primary">
+          <button type="button" class="nav-btn" data-view="chart" data-i18n="nav_chart">Cast Your Chart</button>
+          <button type="button" class="nav-btn" data-view="story" data-i18n="nav_story">Our Story &amp; Ethics</button>
+        </nav>
+        <div class="topbar-right">
+          <div class="lang-toggle" role="group" aria-label="Language">
+            <button type="button" class="lang-btn" data-lang="en">EN</button>
+            <button type="button" class="lang-btn" data-lang="ko">한국어</button>
+          </div>
+          <div id="auth-slot" class="auth-slot"></div>
+        </div>
       </div>
+
+      <div id="view-chart" class="view">
       <header class="hero">
         <h1 data-i18n="hero_title">Cast Your Saju Chart</h1>
       </header>
@@ -84,6 +95,69 @@
           what you find here helps you know yourself, live well, and do good in the world.
         </p>
       </footer>
+      </div><!-- /view-chart -->
+
+      <div id="view-story" class="view" hidden>
+        <article class="story">
+          <h1>Where This Comes From, and How to Use It Well</h1>
+
+          <p>Saju (사주) is a Korean reading of the four pillars of a person's birth — a practice with thousands of years of tradition behind it. The system originates from China, and is called BaZi in Chinese. While they have the same roots and calculations, there are differences in interpretation in the Korean tradition.</p>
+
+          <p>This tool is built on a specific person's method: Master Kim H.K.</p>
+
+          <h2>Master Kim H.K.</h2>
+
+          <p>Master Kim was certified in the late 1990s by two Korean professional bodies for this practice — 한국역술인협회 (the Korea Association of Saju Practitioners) and 한국역리학회 (the Korea Association of I-Ching Studies) — and has read professionally ever since.</p>
+
+          <p>This app is a collaboration between Master Kim and me — Simone Grace Seol, her daughter-in-law. Master Kim is the authority on the methodology and underlying philosophy. My work was to carry her reading into English, and into a form that can meaningfully reach people who are new to Saju, and aren't likely to be able to sit with a Korean practitioner.</p>
+
+          <p>What you're reading is the fruit of the two of us working together — a collaboration of love between a mother-in-law and a daughter-in-law.</p>
+
+          <h2>Why we built this</h2>
+
+          <p>You can find a saju chart online in a minute, and you can ask any AI what it means. And you'll actually get a decent reading. So, why did we build our own tool?</p>
+
+          <p>Master Kim has a way of calculating the chart, weighing certain things and making interpretive decisions that are unique to her and the Korean tradition, which we did not see reflected in many commonly available calculators and AI apps.</p>
+
+          <p>Most of this project was about studying her decision-making and teaching the tool to apply them.</p>
+
+          <p>For example, anyone can find out what 상관 — often clumsily translated as “Hurting Officer” in English — means. The judgment is in what meaning to apply — from an array of different possibilities — how much weight it carries, when a rule should be set aside, and how to read the timing of your life against that.</p>
+
+          <p>That judgment comes from her thirty years of practice, and we created this tool to reflect that.</p>
+
+          <h2>What this is, and what it isn't</h2>
+
+          <p>We trained this AI on Master Kim's decision-making, her philosophy, and her ethics, as faithfully as we could manage. We are genuinely pleased with the result — which is why we're happy to share it.</p>
+
+          <p>But the AI tool is NOT Master Kim, and it is not a substitute for a reading from her or from any skilled human. It talks in a way she doesn't, because it is an AI and she is a person.</p>
+
+          <p>And when Master Kim reads for someone, the chart is only one part of what she's working with. She talks with them, feels into their energy, looks at their face, and — sometimes — reads their palms as well. Because, sometimes, a chart can only tell you so much. And often, the most important and helpful parts of a reading come from exactly that: being in the room with another human being who is giving you their undivided attention. The technology is improving quickly, but it has not reached the point where it can hold the timing, the manner, and above all the care of someone with thirty years of experience — and a lifetime of being human. And we doubt it ever will.</p>
+
+          <p>We will keep refining the tool to stay as close as possible to her methods, but some of the distance between an app and a person can never be bridged. So enjoy this tool, and use it to gain insights for your life.</p>
+
+          <p>But if you're genuinely weighing an important decision, or need insight into something subtle or sensitive, we encourage you to see a skilled human practitioner with the right training and experience. That is Master Kim's own strong recommendation.</p>
+
+          <h2>A reference, not a verdict</h2>
+
+          <p>At its best, a reading like this is a good mirror and a reference — something that helps you notice what you already half-knew about yourself, and maybe consider a few things you hadn't. It is not a verdict on your life, nor is it a prescription. It is not a pronouncement about who you are or what will happen to you. When it's working, it wakes up your own sense of yourself and potential.</p>
+
+          <p>Even the most accurate reading in the world is, in the end, a story. And a story is not the same thing as “The Truth.”</p>
+
+          <p>Even if you consulted the most celebrated fortune-teller alive, or the most revered sage, or the best-credentialed therapist, the right way to hold their words would still be the same: here is a story about me I can try on, and see whether it's true. That goes double for an AI app.</p>
+
+          <p>The highest authority on your life is not the best reader who ever lived, and it is certainly not this software. It is you — what you decide to believe, and the reality you actually build.</p>
+
+          <p>You are more powerful than this machine, and more powerful than any “expert”. Our hope is that you walk away from a reading feeling more like the author of your life, not less.</p>
+
+          <h2>The spirit we offer it in</h2>
+
+          <p>We've made this widely available to put something valuable within reach of people who might otherwise never encounter it — the ideas, the tradition, and a genuinely good reading.</p>
+
+          <p>Much of it is free, and we've done our best to be responsible with all of it.</p>
+
+          <p>Master Kim offers this work with a blessing and a prayer: that whoever uses it will use it for self-cultivation, and to become a more generous and positive force in the world.</p>
+        </article>
+      </div><!-- /view-story -->
     </div>
 
     <div id="tooltip" class="tooltip" role="tooltip" hidden></div>

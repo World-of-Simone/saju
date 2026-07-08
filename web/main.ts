@@ -13,6 +13,7 @@ import {
 import type { Pillar } from "../dist/pillars.js";
 import type { PillarTenGods, TenGodLabel } from "../dist/analysis.js";
 import type { DaeunResult } from "../dist/daeun.js";
+import { Clerk } from "@clerk/clerk-js";
 
 // ---------- tiny DOM helpers ----------
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
@@ -51,6 +52,8 @@ const posName = (p: "year" | "month" | "day" | "hour") => POS_LABEL[lang][p];
 /** Static page copy (index.html), filled in by data-i18n attributes. */
 const STATIC: Record<Lang, Record<string, string>> = {
   en: {
+    nav_chart: "Cast Your Chart",
+    nav_story: "Our Story & Ethics",
     hero_title: "Cast Your Saju Chart",
     form_title: "Your birth details",
     f_date: "Date of birth",
@@ -74,6 +77,8 @@ const STATIC: Record<Lang, Record<string, string>> = {
       'City data © <a href="https://www.geonames.org/" target="_blank" rel="noopener noreferrer">GeoNames</a>, licensed under CC BY 4.0.',
   },
   ko: {
+    nav_chart: "사주 뽑기",
+    nav_story: "우리 이야기 · 윤리",
     hero_title: "사주 뽑기",
     form_title: "출생 정보",
     f_date: "생년월일",
@@ -372,57 +377,160 @@ function buildChartText(r: SajuResult): string {
   return L.join("\n");
 }
 
-async function copyToClipboard(text: string): Promise<boolean> {
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(text);
-      return true;
-    }
-  } catch {
-    /* fall through to legacy path */
-  }
-  try {
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.style.position = "fixed";
-    ta.style.top = "-1000px";
-    ta.style.opacity = "0";
-    document.body.appendChild(ta);
-    ta.focus();
-    ta.select();
-    const ok = document.execCommand("copy");
-    document.body.removeChild(ta);
-    return ok;
-  } catch {
-    return false;
-  }
-}
+/**
+ * "Read my chart" — turns the computed chart into a written reading. The reading is produced by a
+ * small server-side proxy (it holds the API key and the reading spec; a static page can't hold a
+ * secret). The reading is gated behind a Clerk email sign-in: the browser sends the Clerk session
+ * token, and the proxy verifies it, meters the person's free/paid allowance, then streams the
+ * reading back as plain-text chunks, appended as they land.
+ */
+const READING_ENDPOINT = "https://saju-reading.saju-seol.workers.dev";
 
-function copyBar(): string {
-  return `<section class="card result-section copy-bar">
-    <div class="copy-bar-row">
-      <div class="copy-bar-text">
-        <h3 style="margin:0">${tr("Take this reading with you", "이 풀이를 가져가세요")}</h3>
-        <p class="el-note" style="margin:0.3rem 0 0">${tr("Copy your full chart as text, then paste it into ChatGPT, Claude, or any AI to ask your own questions.", "전체 명식을 텍스트로 복사해 ChatGPT, Claude 등 어떤 AI에든 붙여넣고 직접 질문해 보세요.")}</p>
-      </div>
-      <button type="button" id="copy-chart" class="copy-btn">${tr("Copy chart for AI", "AI용 명식 복사")}</button>
+let readingInFlight = false;
+
+function readPanel(): string {
+  return `<section class="card result-section reading-card">
+    <div class="copy-bar-text">
+      <h3 style="margin:0">${tr("Read my chart", "내 사주 풀이")}</h3>
+      <p class="el-note" style="margin:0.3rem 0 0">${tr(
+        "Turn everything above into a written reading — a plain-language interpretation of your chart, grounded in the facts on this page. Sign in with your email to read; the first few are on us.",
+        "위의 모든 것을 글로 된 풀이로 바꿔 드립니다 — 이 화면의 사실에 근거해, 당신의 사주를 쉬운 말로 해석해 드립니다. 이메일로 로그인하면 볼 수 있고, 처음 몇 번은 무료입니다.",
+      )}</p>
     </div>
-    <p id="copy-status" class="copy-status" aria-live="polite"></p>
+    <button type="button" id="read-chart" class="read-btn">${tr("Read my chart", "내 사주 풀이 보기")}</button>
+    <p id="reading-status" class="copy-status" aria-live="polite"></p>
+    <div id="reading-output" class="reading-output" aria-live="polite"></div>
   </section>`;
 }
 
-document.addEventListener("click", async (e) => {
-  const btn = (e.target as HTMLElement).closest("#copy-chart");
-  if (!btn) return;
-  const ok = await copyToClipboard(currentChartText);
-  const status = $("#copy-status");
-  if (status) {
-    status.textContent = ok
-      ? tr("Copied! Paste it into ChatGPT, Claude, or any AI.", "복사되었습니다! ChatGPT, Claude 등 AI에 붙여넣으세요.")
-      : tr("Couldn't copy automatically — select the text in the chart above and copy it manually.", "자동 복사에 실패했습니다 — 위 명식의 텍스트를 직접 선택해 복사하세요.");
-    status.classList.toggle("ok", ok);
+function setReadingStatus(msg: string, ok = false): void {
+  const status = $("#reading-status");
+  if (!status) return;
+  status.classList.toggle("ok", ok);
+  status.textContent = msg;
+}
+
+async function readChart(): Promise<void> {
+  const outEl = $("#reading-output");
+  const btn = $<HTMLButtonElement>("#read-chart");
+  if (!outEl || readingInFlight) return;
+
+  // Gate behind sign-in. If Clerk is still warming up, ask them to retry in a moment.
+  if (!clerkReady) {
+    setReadingStatus(tr("Just a moment — still loading…", "잠시만요 — 불러오는 중…"));
+    return;
   }
+  if (!clerk.user) {
+    clerk.openSignIn();
+    return;
+  }
+
+  const token = await clerk.session?.getToken();
+  if (!token) {
+    clerk.openSignIn();
+    return;
+  }
+
+  readingInFlight = true;
+  if (btn) btn.disabled = true;
+  outEl.textContent = "";
+  setReadingStatus(tr("Reading your chart…", "사주를 읽는 중…"));
+
+  try {
+    const resp = await fetch(READING_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ chart: currentChartText, lang }),
+    });
+
+    // Out of readings — the server says the free/paid allowance is used up.
+    if (resp.status === 402) {
+      setReadingStatus(
+        tr(
+          "You've used all your readings for now. Bundles are coming soon — thank you for your patience.",
+          "지금 이용할 수 있는 풀이를 모두 사용하셨습니다. 곧 이용권을 준비 중입니다. 기다려 주셔서 감사합니다.",
+        ),
+      );
+      return;
+    }
+    if (!resp.ok || !resp.body) throw new Error(`HTTP ${resp.status}`);
+
+    const remaining = resp.headers.get("X-Readings-Remaining");
+    const reader = resp.body.getReader();
+    const dec = new TextDecoder();
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      outEl.textContent += dec.decode(value, { stream: true });
+    }
+    if (remaining != null) {
+      const n = Number(remaining);
+      setReadingStatus(
+        tr(
+          `${n} reading${n === 1 ? "" : "s"} left.`,
+          `남은 풀이 ${n}회.`,
+        ),
+        true,
+      );
+    } else {
+      setReadingStatus("");
+    }
+  } catch {
+    setReadingStatus(
+      tr(
+        "Something went wrong reading your chart. Please try again in a moment.",
+        "사주를 읽는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+      ),
+    );
+  } finally {
+    readingInFlight = false;
+    if (btn) btn.disabled = false;
+  }
+}
+
+document.addEventListener("click", (e) => {
+  const btn = (e.target as HTMLElement).closest("#read-chart");
+  if (!btn) return;
+  void readChart();
 });
+
+// ---------- Clerk auth (email verification code) ----------
+const CLERK_PUBLISHABLE_KEY = "pk_test_ZW5vdWdoLWRhbmUtNTAuY2xlcmsuYWNjb3VudHMuZGV2JA";
+const clerk = new Clerk(CLERK_PUBLISHABLE_KEY);
+let clerkReady = false;
+
+function renderAuthSlot(): void {
+  const slot = document.getElementById("auth-slot");
+  if (!slot) return;
+  slot.innerHTML = "";
+  if (clerk.user) {
+    const holder = document.createElement("div");
+    slot.appendChild(holder);
+    clerk.mountUserButton(holder, { afterSignOutUrl: location.pathname });
+  } else {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "auth-signin-btn";
+    b.textContent = tr("Sign in", "로그인");
+    b.addEventListener("click", () => clerk.openSignIn());
+    slot.appendChild(b);
+  }
+}
+
+async function initClerk(): Promise<void> {
+  try {
+    await clerk.load();
+    clerkReady = true;
+    renderAuthSlot();
+    clerk.addListener(() => renderAuthSlot());
+  } catch {
+    // If Clerk fails to load, the sign-in button just won't appear; the page still works.
+  }
+}
+void initClerk();
 
 // ---------- rendering ----------
 /** Ten God visible label — bilingual in English, hangul-only in Korean. */
@@ -720,13 +828,13 @@ function render(r: SajuResult) {
   currentChartText = buildChartText(r);
   const out = $("#results");
   out.innerHTML =
-    copyBar() +
     renderWarnings(r) +
     renderPillars(r) +
     renderTST(r) +
     renderElements(r) +
     renderRelations(r) +
-    renderDaeun(r);
+    renderDaeun(r) +
+    readPanel();
   out.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
@@ -744,6 +852,7 @@ function setLang(next: Lang) {
   localStorage.setItem("saju-lang", next);
   applyStaticI18n();
   syncLangButtons();
+  renderAuthSlot(); // "Sign in" button label follows the language
   if (lastResult) render(lastResult); // re-render results in the new language
 }
 
@@ -751,9 +860,35 @@ document.querySelectorAll<HTMLButtonElement>(".lang-btn").forEach((b) => {
   b.addEventListener("click", () => setLang(b.dataset.lang as Lang));
 });
 
+// ---------- page navigation (Cast Your Chart / Our Story & Ethics) ----------
+type View = "chart" | "story";
+
+function showView(next: View) {
+  document.querySelectorAll<HTMLElement>(".view").forEach((v) => {
+    v.hidden = v.id !== `view-${next}`;
+  });
+  document.querySelectorAll<HTMLElement>(".nav-btn").forEach((b) => {
+    const active = b.dataset.view === next;
+    b.classList.toggle("active", active);
+    b.setAttribute("aria-current", active ? "page" : "false");
+  });
+  if (`#${next}` !== location.hash) {
+    history.replaceState(null, "", next === "chart" ? location.pathname : `#${next}`);
+  }
+  window.scrollTo({ top: 0, behavior: "auto" });
+}
+
+document.querySelectorAll<HTMLButtonElement>(".nav-btn").forEach((b) => {
+  b.addEventListener("click", () => showView(b.dataset.view as View));
+});
+window.addEventListener("hashchange", () => {
+  showView(location.hash === "#story" ? "story" : "chart");
+});
+
 // Apply the persisted language to the static page on first load.
 applyStaticI18n();
 syncLangButtons();
+showView(location.hash === "#story" ? "story" : "chart");
 
 // ---------- form submit ----------
 $<HTMLFormElement>("#saju-form").addEventListener("submit", (e) => {

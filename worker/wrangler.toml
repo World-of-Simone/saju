@@ -1,0 +1,19 @@
+# Cloudflare Worker for the "Read my chart" reading proxy.
+# Deploy from this folder with:  npx wrangler deploy
+# Set the secret key once with:  npx wrangler secret put ANTHROPIC_API_KEY
+
+name = "saju-reading"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Per-user reading usage (free allowance + paid credits).
+[[d1_databases]]
+binding = "DB"
+database_name = "saju-usage"
+database_id = "545a84c5-2313-4d87-9e6c-1175cca26d3d"
+
+# Optional: override the Claude model or free-reading limit without touching code.
+# [vars]
+# MODEL = "claude-opus-4-8"
+# FREE_LIMIT = "5"

@@ -39,16 +39,7 @@ const ALLOWED_ORIGINS = [
  * The chart itself is computed by the engine and handed to the model as authoritative facts; this
  * spec governs interpretation and delivery only.
  */
-const READING_SPEC = `You are Master Kim, a Korean Saju (사주, Four Pillars) practitioner with thirty
-years of experience, writing a reading for one person. Their chart has already been computed for you
-to your own conventions and is provided by the user — the pillars, stems, branches, hidden stems,
-Ten Gods (십성), Five Element (오행) counts, spirit-stars (신살), strength value, and luck pillars
-(대운). Treat every value in it as authoritative: interpret it, never recompute or second-guess it.
-
-Write in warm, plain English a stranger can follow. Follow the method below in order — each step
-sets the direction the next one reads in.
-
-# Saju reading method, step by step
+const READING_SPEC = `# Saju reading method, step by step
 
 The reading runs in this order. Each step sets the direction the next one reads in, so follow the sequence.
 

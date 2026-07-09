@@ -382,13 +382,34 @@ input:focus { outline: none; border-bottom-color: var(--accent); }
 .read-btn:hover { background: var(--paper-hi); color: var(--green); }
 .read-btn:active { transform: translateY(1px); }
 .read-btn:disabled { opacity: 0.55; cursor: default; transform: none; }
+/* The reading is long prose, so it sits in its own full-width block below the
+   two-column chart area — not crammed into the narrow right column. The card is
+   centered and the text held to a comfortable reading measure. */
+.reading-area { margin-top: 2rem; }
+.reading-area:empty { display: none; }
+.reading-area .reading-card { max-width: 760px; margin: 0 auto; }
+
 .reading-output {
-  white-space: pre-wrap;
-  line-height: 1.7;
+  line-height: 1.75;
   margin-top: 0.6rem;
   color: var(--ink);
+  max-width: 68ch;
 }
 .reading-output:empty { margin-top: 0; }
+.reading-output p { margin: 0 0 1.05rem; }
+.reading-output h3, .reading-output h4, .reading-output h5 {
+  font-family: var(--font-display);
+  color: var(--green);
+  line-height: 1.3;
+  margin: 1.8rem 0 0.7rem;
+}
+.reading-output h3 { font-size: 1.2rem; }
+.reading-output h4 { font-size: 1.05rem; }
+.reading-output h5 { font-size: 0.95rem; color: var(--ink-soft); }
+.reading-output > :first-child { margin-top: 0; }
+.reading-output ul { margin: 0 0 1.05rem; padding-left: 1.2rem; }
+.reading-output li { margin: 0 0 0.4rem; }
+.reading-output strong { color: var(--ink); font-weight: 700; }
 
 /* Day Master strength & 용신 */
 .strength-verdict { font-size: 1.1rem; margin: 0.2rem 0 0.85rem; }

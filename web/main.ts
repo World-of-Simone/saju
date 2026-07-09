@@ -390,6 +390,48 @@ const READING_ENDPOINT = "https://saju-reading.saju-seol.workers.dev";
 
 let readingInFlight = false;
 
+/**
+ * Minimal, safe Markdown → HTML for the reading. The model writes plain prose with the
+ * occasional heading (##), bold (**…**), and bullet list. We escape everything first, so no
+ * raw HTML from the stream can ever run, then apply just those few formatting rules.
+ */
+function renderReadingMarkdown(md: string): string {
+  const escape = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const inline = (s: string) =>
+    escape(s)
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+      .replace(/(^|[^*])\*([^*]+)\*(?!\*)/g, "$1<em>$2</em>");
+
+  const lines = md.split("\n");
+  const html: string[] = [];
+  let inList = false;
+  const closeList = () => {
+    if (inList) { html.push("</ul>"); inList = false; }
+  };
+
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    const heading = line.match(/^(#{1,4})\s+(.*)$/);
+    const bullet = line.match(/^[-*]\s+(.*)$/);
+    if (heading) {
+      closeList();
+      const level = Math.min(heading[1].length + 1, 5); // ## → h3, etc.
+      html.push(`<h${level}>${inline(heading[2])}</h${level}>`);
+    } else if (bullet) {
+      if (!inList) { html.push("<ul>"); inList = true; }
+      html.push(`<li>${inline(bullet[1])}</li>`);
+    } else if (line.trim() === "") {
+      closeList();
+    } else {
+      closeList();
+      html.push(`<p>${inline(line)}</p>`);
+    }
+  }
+  closeList();
+  return html.join("\n");
+}
+
 function readPanel(): string {
   return `<section class="card result-section reading-card">
     <div class="copy-bar-text">
@@ -463,10 +505,12 @@ async function readChart(): Promise<void> {
     const remaining = resp.headers.get("X-Readings-Remaining");
     const reader = resp.body.getReader();
     const dec = new TextDecoder();
+    let readingText = "";
     for (;;) {
       const { value, done } = await reader.read();
       if (done) break;
-      outEl.textContent += dec.decode(value, { stream: true });
+      readingText += dec.decode(value, { stream: true });
+      outEl.innerHTML = renderReadingMarkdown(readingText);
     }
     if (remaining != null) {
       const n = Number(remaining);
@@ -879,8 +923,10 @@ function render(r: SajuResult) {
     renderTST(r) +
     renderElements(r) +
     renderRelations(r) +
-    renderDaeun(r) +
-    readPanel();
+    renderDaeun(r);
+  // The reading is long prose, so it lives in its own full-width block below the
+  // two-column chart area (not crammed into the narrow right column).
+  $("#reading-area").innerHTML = readPanel();
   out.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 

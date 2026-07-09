@@ -168,6 +168,30 @@ const pad2 = (n: number) => String(n).padStart(2, "0");
 
 /** Current chart serialized as text; refreshed on every render, read by the copy button. */
 let currentChartText = "";
+/** Short human-readable birth summary for the current chart; sent with the reading so a saved
+ *  reading has a title in the "past readings" list. */
+let currentLabel = "";
+
+const MONTHS_EN = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+/** Build the short birth summary shown in the past-readings list, e.g. "May 15, 1990 · 2:30 PM". */
+function buildLabel(r: SajuResult): string {
+  const inp = r.input;
+  const date = `${MONTHS_EN[(inp.month ?? 1) - 1]} ${inp.day}, ${inp.year}`;
+  const known = inp.hasBirthTime !== false;
+  let time = "time unknown";
+  if (known) {
+    const h = inp.hour ?? 0;
+    const m = inp.minute ?? 0;
+    const ampm = h < 12 ? "AM" : "PM";
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    time = `${h12}:${pad2(m)} ${ampm}`;
+  }
+  return `${date} · ${time}`;
+}
 
 function stemDesc(s: Stem): string {
   return `${s.hanja} (${s.hangul} · ${s.roman}), ${elName(s.element)}/${polName(s.polarity)}`;
@@ -487,7 +511,7 @@ async function readChart(): Promise<void> {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ chart: currentChartText, lang }),
+      body: JSON.stringify({ chart: currentChartText, label: currentLabel, lang }),
     });
 
     // Out of readings — the server says the free/paid allowance is used up.
@@ -524,6 +548,8 @@ async function readChart(): Promise<void> {
     } else {
       setReadingStatus("");
     }
+    // The reading was auto-saved server-side; refresh the past-readings list so the new one shows.
+    void refreshPastReadings();
   } catch {
     setReadingStatus(
       tr(
@@ -541,6 +567,103 @@ document.addEventListener("click", (e) => {
   const btn = (e.target as HTMLElement).closest("#read-chart");
   if (!btn) return;
   void readChart();
+});
+
+// ---------- Past readings (saved to the account) ----------
+interface PastReadingItem {
+  id: number;
+  label: string | null;
+  created_at: string;
+}
+
+/** Format the stored UTC datetime ("YYYY-MM-DD HH:MM:SS") as a local date like "Jul 9, 2026". */
+function formatWhen(dt: string): string {
+  const d = new Date(dt.replace(" ", "T") + "Z");
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
+/** Fetch the signed-in person's saved readings and render the list. Hidden when signed out/empty. */
+async function refreshPastReadings(): Promise<void> {
+  const panel = document.getElementById("past-readings");
+  if (!panel) return;
+  if (!clerkReady || !clerk?.user) {
+    panel.hidden = true;
+    return;
+  }
+  try {
+    const token = await clerk.session?.getToken();
+    if (!token) {
+      panel.hidden = true;
+      return;
+    }
+    const resp = await fetch(`${READING_ENDPOINT}/readings`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!resp.ok) {
+      panel.hidden = true;
+      return;
+    }
+    const data = (await resp.json()) as { readings?: PastReadingItem[] };
+    renderPastReadings(panel, data.readings ?? []);
+  } catch {
+    panel.hidden = true;
+  }
+}
+
+function renderPastReadings(panel: HTMLElement, readings: PastReadingItem[]): void {
+  if (!readings.length) {
+    panel.hidden = true;
+    panel.innerHTML = "";
+    return;
+  }
+  const items = readings
+    .map((r) => {
+      const title = esc(r.label || tr("Saju reading", "사주 풀이"));
+      const when = esc(formatWhen(r.created_at));
+      return `<li>
+        <button type="button" class="past-item" data-id="${r.id}">
+          <span class="past-item-label">${title}</span>
+          <span class="past-item-when">${when}</span>
+        </button>
+      </li>`;
+    })
+    .join("");
+  panel.innerHTML = `
+    <h3>${tr("Your past readings", "지난 풀이")}</h3>
+    <ul class="past-list">${items}</ul>
+    <div id="past-reading-view" class="reading-output" aria-live="polite"></div>`;
+  panel.hidden = false;
+}
+
+/** Open a saved reading in full when its list item is clicked. */
+async function openPastReading(id: string): Promise<void> {
+  const view = document.getElementById("past-reading-view");
+  if (!view || !clerk?.user) return;
+  view.innerHTML = `<p>${tr("Loading…", "불러오는 중…")}</p>`;
+  try {
+    const token = await clerk.session?.getToken();
+    if (!token) return;
+    const resp = await fetch(`${READING_ENDPOINT}/readings/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = (await resp.json()) as { reading?: string };
+    view.innerHTML = renderReadingMarkdown(data.reading ?? "");
+    view.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  } catch {
+    view.innerHTML = `<p>${tr(
+      "Could not open that reading. Please try again.",
+      "그 풀이를 열 수 없습니다. 다시 시도해 주세요.",
+    )}</p>`;
+  }
+}
+
+document.addEventListener("click", (e) => {
+  const item = (e.target as HTMLElement).closest(".past-item");
+  if (!item) return;
+  const id = item.getAttribute("data-id");
+  if (id) void openPastReading(id);
 });
 
 // ---------- Clerk auth (email verification code) ----------
@@ -618,7 +741,11 @@ async function initClerk(): Promise<void> {
     await clerk.load();
     clerkReady = true;
     renderAuthSlot();
-    clerk.addListener(() => renderAuthSlot());
+    void refreshPastReadings();
+    clerk.addListener(() => {
+      renderAuthSlot();
+      void refreshPastReadings();
+    });
   } catch {
     // If Clerk fails to load, the sign-in button just won't appear; the page still works.
   }
@@ -916,6 +1043,7 @@ function renderWarnings(r: SajuResult): string {
 
 function render(r: SajuResult) {
   currentChartText = buildChartText(r);
+  currentLabel = buildLabel(r);
   const out = $("#results");
   out.innerHTML =
     renderWarnings(r) +

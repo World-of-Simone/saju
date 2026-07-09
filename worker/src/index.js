@@ -169,7 +169,7 @@ function corsHeaders(origin) {
   const allow = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
     "Access-Control-Allow-Origin": allow,
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Expose-Headers": "X-Readings-Remaining",
     "Vary": "Origin",
@@ -210,8 +210,29 @@ async function getOrCreateUser(env, userId) {
   return { id: userId, email, free_used: 0, paid_credits: 0 };
 }
 
-/** Turn Anthropic's SSE stream into a plain-text stream of just the words. */
-function anthropicTextStream(upstreamBody) {
+/**
+ * Save a finished reading so the person can come back to it. Non-fatal: if the write fails we
+ * still served the reading, so we swallow the error rather than break the response.
+ */
+async function saveReading(env, userId, label, chart, reading) {
+  if (!reading || !reading.trim()) return;
+  try {
+    await env.DB.prepare(
+      "INSERT INTO readings (user_id, label, chart, reading) VALUES (?, ?, ?, ?)",
+    )
+      .bind(userId, label || null, chart, reading)
+      .run();
+  } catch {
+    // Non-fatal — the person already has their reading.
+  }
+}
+
+/**
+ * Turn Anthropic's SSE stream into a plain-text stream of just the words. If `onDone` is given, it
+ * is awaited with the full reading text once the stream ends and BEFORE the stream is closed — so a
+ * caller can persist the reading and the browser only sees "done" after the save has run.
+ */
+function anthropicTextStream(upstreamBody, onDone) {
   const { readable, writable } = new TransformStream();
   const writer = writable.getWriter();
   const reader = upstreamBody.getReader();
@@ -222,6 +243,7 @@ function anthropicTextStream(upstreamBody) {
   // response body is still open, so this drains fully.
   (async () => {
     let buffer = "";
+    let full = "";
     try {
       for (;;) {
         const { value, done } = await reader.read();
@@ -238,6 +260,7 @@ function anthropicTextStream(upstreamBody) {
             try {
               const obj = JSON.parse(payload);
               if (obj.type === "content_block_delta" && obj.delta?.type === "text_delta") {
+                full += obj.delta.text;
                 await writer.write(encoder.encode(obj.delta.text));
               }
             } catch {
@@ -249,6 +272,13 @@ function anthropicTextStream(upstreamBody) {
     } catch {
       // upstream broke mid-stream; fall through and close what we have
     } finally {
+      if (onDone) {
+        try {
+          await onDone(full);
+        } catch {
+          // saving is best-effort; never let it break the stream close
+        }
+      }
       try {
         await writer.close();
       } catch {
@@ -268,12 +298,18 @@ export default {
     if (request.method === "OPTIONS") {
       return new Response(null, { headers: cors });
     }
-    if (request.method !== "POST") {
+    if (request.method !== "POST" && request.method !== "GET") {
       return new Response("Method not allowed", { status: 405, headers: cors });
     }
     if (!env.ANTHROPIC_API_KEY || !env.CLERK_SECRET_KEY || !env.DB) {
       return new Response("Server not configured", { status: 500, headers: cors });
     }
+
+    const json = (obj, status = 200) =>
+      new Response(JSON.stringify(obj), {
+        status,
+        headers: { ...cors, "content-type": "application/json; charset=utf-8" },
+      });
 
     // Who is asking? The browser sends the signed-in session token as a Bearer token.
     const authHeader = request.headers.get("Authorization") || "";
@@ -299,6 +335,29 @@ export default {
       return new Response("Please sign in first.", { status: 401, headers: cors });
     }
 
+    // ---- Past readings (GET) ----
+    // GET /readings        → list this person's saved readings (newest first)
+    // GET /readings/{id}   → one saved reading in full (only if it's theirs)
+    if (request.method === "GET") {
+      const path = new URL(request.url).pathname;
+      const one = path.match(/\/readings\/(\d+)$/);
+      if (one) {
+        const row = await env.DB.prepare(
+          "SELECT id, label, chart, reading, created_at FROM readings WHERE id = ? AND user_id = ?",
+        )
+          .bind(Number(one[1]), userId)
+          .first();
+        if (!row) return json({ error: "Not found" }, 404);
+        return json(row);
+      }
+      const { results } = await env.DB.prepare(
+        "SELECT id, label, created_at FROM readings WHERE user_id = ? ORDER BY created_at DESC, id DESC LIMIT 50",
+      )
+        .bind(userId)
+        .all();
+      return json({ readings: results ?? [] });
+    }
+
     let body;
     try {
       body = await request.json();
@@ -310,6 +369,8 @@ export default {
     if (!chart) {
       return new Response("Missing chart", { status: 400, headers: cors });
     }
+    // Short human-readable birth summary, shown in the person's past-readings list.
+    const label = String(body?.label ?? "").slice(0, 200);
 
     // How many readings does this person have left?
     const freeLimit = Number(env.FREE_LIMIT) || DEFAULT_FREE_LIMIT;
@@ -373,7 +434,14 @@ export default {
       remaining = paidLeft - 1;
     }
 
-    return new Response(anthropicTextStream(upstream.body), {
+    // Stream the reading to the browser and, once it finishes, auto-save it to the person's
+    // account. The save runs before the stream closes, so the browser can refresh its
+    // past-readings list as soon as it sees the stream end and find the new one there.
+    const stream = anthropicTextStream(upstream.body, (fullText) =>
+      saveReading(env, userId, label, chart, fullText),
+    );
+
+    return new Response(stream, {
       headers: {
         ...cors,
         "content-type": "text/plain; charset=utf-8",

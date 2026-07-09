@@ -334,8 +334,14 @@ export default {
       },
       body: JSON.stringify({
         model: env.MODEL || DEFAULT_MODEL,
-        max_tokens: 6000,
+        // Room for the model to reason AND write the reading (both count here).
+        max_tokens: 16000,
         stream: true,
+        // Extended thinking: reason through the method step by step before writing.
+        // This model uses adaptive thinking + an effort dial (not a fixed budget).
+        // The stream parser forwards only text_delta, so the thinking stays private.
+        thinking: { type: "adaptive" },
+        output_config: { effort: "high" },
         system: READING_SPEC,
         messages: [{ role: "user", content: userMessage }],
       }),
